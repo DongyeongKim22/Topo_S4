@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 repos:
 -   repo: https://github.com/timothycrosley/isort
     rev: 5.12.0
@@ -15,4 +16,23 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
+=======
+repos:
+-   repo: https://github.com/timothycrosley/isort
+    rev: 5.12.0
+    hooks:
+    -   id: isort
+-   repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+    - id: black
+      language_version: python3
+      additional_dependencies: ['click==8.0.4']
+      exclude: 'scratch/.*'
+
+-   repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+    -   id: flake8
+>>>>>>> 2a5624c (Add project fiels)
         exclude: 'scratch/.*'
