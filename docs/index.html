@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <title>Topo_S4</title>
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+  </head>
+  <body>
+    <main style="max-width: 900px; margin: 40px auto; font-family: system-ui; line-height: 1.5;">
+      <h1>Topo_S4</h1>
+      <p>Research project homepage (PWA scaffold).</p>
+
+      <h2>Links</h2>
+      <ul>
+        <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub Repo</a></li>
+      </ul>
+
+      <h2>Status</h2>
+      <p>Main experiment/Summary of Result.</p>
+    </main>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js");
+        });
+      }
+    </script>
+  </body>
+</html>
