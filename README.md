@@ -12,10 +12,10 @@ Repo: https://github.com/DongyeongKim22/Topo_S4
 A working hypothesis is that **near-Nyquist digital frequencies** (Ω → π) can become numerically
 over-sensitive under bilinear/Tustin discretization due to frequency warping:
 
-\[
-\omega(\Omega)=\frac{2}{\Delta}\tan(\Omega/2), \quad
-\frac{d\omega}{d\Omega}=\frac{1}{\Delta}\sec^2(\Omega/2),
-\]
+<p>
+  $$\omega(\Omega)=\frac{2}{\Delta}\tan(\Omega/2), \quad
+  \frac{d\omega}{d\Omega}=\frac{1}{\Delta}\sec^2(\Omega/2)$$
+</p>
 
 so sensitivity grows rapidly as Ω approaches π. If inputs contain strong near-Nyquist components,
 training/evaluation can exhibit sharper degradation.
@@ -90,3 +90,4 @@ Work in progress. Next steps:
 - Complete keep_ratio sweep for PC-band.
 - Add stability metrics (loss spikes, NaN/Inf, grad-norm percentiles).
 - Compare S4D vs Transformer on multiple datasets.
+
