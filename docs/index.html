@@ -4,22 +4,148 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#111827" />
+    <meta name="description" content="Topo_S4 project homepage: frequency-localized sensitivity + phase-coherent bandlimiting (PC-band) for S4 training." />
     <title>Topo_S4</title>
 
     <link rel="manifest" href="./manifest.webmanifest" />
+
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+        line-height: 1.55;
+      }
+      main { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+      h1 { margin-bottom: 8px; }
+      .muted { opacity: 0.75; }
+      .card {
+        border: 1px solid rgba(127,127,127,0.25);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+      }
+      figure { margin: 0; }
+      img.responsive {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        border: 1px solid rgba(127,127,127,0.25);
+      }
+      figcaption { margin-top: 8px; font-size: 0.95rem; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { border-bottom: 1px solid rgba(127,127,127,0.25); padding: 8px 6px; text-align: left; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      ul { margin-top: 8px; }
+    </style>
   </head>
+
   <body>
-    <main style="max-width: 900px; margin: 40px auto; font-family: system-ui; line-height: 1.5;">
+    <main>
       <h1>Topo_S4</h1>
-      <p>Research project homepage (PWA scaffold).</p>
+      <p class="muted">
+        Work-in-progress research project: frequency-localized sensitivity (near-Nyquist vulnerability) and
+        phase-coherent bandlimiting (PC-band) for stable S4-family training.
+      </p>
 
-      <h2>Links</h2>
-      <ul>
-        <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub Repo</a></li>
-      </ul>
+      <section class="card">
+        <h2>Links</h2>
+        <ul>
+          <li><a href="https://dongyeongkim22.github.io/Topo_S4/">Website (this page)</a></li>
+          <li><a href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">Overleaf Draft</a></li>
+          <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub Repo</a></li>
+        </ul>
+      </section>
 
-      <h2>Status</h2>
-      <p>On experiment/Planning to update the result.</p>
+      <section class="card">
+        <h2>Latest Results (Preliminary)</h2>
+
+        <h3>1) Frequency-localized vulnerability on CIFAR-10 (S4D)</h3>
+        <figure>
+          <img
+            class="responsive"
+            src="./assets/eval_lpf070_072_track2_rel005_s4d_cifar10_rho_sweep_acc.png"
+            alt="Accuracy vs rho on CIFAR-10 with single-mode perturbation; sharp drop near Nyquist."
+            loading="lazy"
+          />
+          <figcaption class="muted">
+            <strong>Accuracy vs. perturbation frequency</strong> (ρ = 1.0 is Nyquist).
+            Setting: s4d | cifar10 | target relΔ=0.05 | preproc=lpf(test) | track=filter_then_pert.
+            Clean accuracy is stable; perturbed accuracy drops sharply near high ρ (near-Nyquist).
+          </figcaption>
+        </figure>
+
+        <h3 style="margin-top: 18px;">2) PC-band on DTD96 (S4D, seeds 0/1/2)</h3>
+        <p class="muted" style="margin-bottom: 6px;">
+          Summary from three-seed runs (preliminary): PC-band with keep_ratio=0.90 improves mean best test accuracy.
+        </p>
+        <table aria-label="DTD96 PC-band results table">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>keep_ratio</th>
+              <th>Mean Best Test (%)</th>
+              <th>Δ vs Raw (pp)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Raw</td>
+              <td>--</td>
+              <td>36.42</td>
+              <td>0.00</td>
+            </tr>
+            <tr>
+              <td>PC-band</td>
+              <td>0.90</td>
+              <td>37.41</td>
+              <td>+0.99</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 18px;">3) PC-band sanity check on sCIFAR10 (S4D, seed 0)</h3>
+        <p class="muted" style="margin-bottom: 6px;">
+          Small-effect regime example; mainly used to validate the preprocessing pipeline.
+        </p>
+        <table aria-label="sCIFAR10 PC-band sanity check table">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Best Val (%)</th>
+              <th>Test @ Best Val (%)</th>
+              <th>Best Test (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Raw</td>
+              <td>89.08</td>
+              <td>88.69</td>
+              <td>88.78</td>
+            </tr>
+            <tr>
+              <td>PC-band (keep_ratio=0.80)</td>
+              <td>89.16</td>
+              <td>88.54</td>
+              <td>88.58</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Repro (very short)</h2>
+        <ul>
+          <li>Run scripts and flags are documented in the repo.</li>
+          <li>
+            Track definitions:
+            <code>filter_both: F(u+δ)</code>, <code>filter_then_pert: F(u)+δ</code>
+          </li>
+        </ul>
+      </section>
+
+      <p class="muted">Last updated: add your date here (e.g., 2026-02-15).</p>
     </main>
 
     <script>
