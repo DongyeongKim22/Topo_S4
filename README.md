@@ -74,26 +74,28 @@ This is mainly to validate the preprocessing pipeline end-to-end; effects are sm
 ---
 
 ### 4) Pathfinder32 added (pilot sweeps; 5 epochs)
-Compute is currently the main bottleneck, so I run **short 5-epoch sweeps** to narrow down promising
-PC hyperparameters before doing full-epoch runs. These pilots are **for hyperparameter selection / effect direction**,
-not final reported results.
+Some datasets / long-sequence settings are large in my environment (e.g., SC35 is ~90 min/epoch),
+so I run **short 5-epoch sweeps** to select promising PC keep-budgets before doing full-epoch runs.
+These pilots are for **hyperparameter selection / effect-direction checks**, not final reported numbers.
 
-**Trend:** applying PC **consistently during training and evaluation** (`preproc_scope=both`) tends to generalize better
-than mismatched scopes (especially for **PC-weight**, which can collapse under scope mismatch).
+**Scope ablation takeaway:** applying PC only at evaluation time (`preproc_scope=test`) can introduce
+distribution shift. In this pilot, **scope mismatch** is especially harmful for PC-weight. In contrast,
+applying PC during training (train or both) tends to be more stable.
 
 Pathfinder32 (seed 0, **5 epochs**; metric = **test @ best dev**):
 
 | Setting | scope | budget | Test @ Best Dev (%) |
 |---|---|---:|---:|
 | Raw | both | -- | 77.00 |
+| PC-band | train | keep_ratio=0.90 | 77.37 |
+| PC-band | test | keep_ratio=0.90 | 76.10 |
 | PC-band | both | keep_ratio=0.90 | 76.79 |
+| PC-weight | train | target_mean_w=0.40 | 52.40 |
+| PC-weight | test | target_mean_w=0.40 | 49.93 |
 | PC-weight | both | target_mean_w=0.40 | 77.76 |
 
-Scope mismatch example (same pilot setting):
-- PC-weight (target_mean_w=0.40, **scope=test-only**): 49.93 (large drop → distribution shift)
-
-> Next: add **full-epoch** results for the selected PC settings. After narrowing down hyperparameters,
-> evaluate on **SC35** (compute-heavy in my setup: ~90 min/epoch).
+> Next: add **full-epoch** results for the selected PC settings (same hyperparameters, longer training),
+> then move to **SC35** once the keep-budget grid is narrowed down.
 
 ---
 
@@ -109,6 +111,6 @@ Scope mismatch example (same pilot setting):
 Work in progress.
 
 Next steps:
-- Continue keep-budget selection with short sweeps (≤5 epochs) under limited compute.
-- Run **full epochs** (paper-aligned settings) for the best PC-band / PC-weight configurations.
-- Move to **SC35** (≈90 min/epoch in my setup) after narrowing down hyperparameters.
+- Keep CIFAR/DTD results as-is; continue pilots to select PC-band / PC-weight keep-budgets.
+- Run **full epochs** (paper-aligned settings) for the best PC configurations.
+- Evaluate on **SC35** after narrowing down hyperparameters (≈90 min/epoch in my setup).
