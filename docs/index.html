@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#111827" />
-    <meta name="description" content="Topo_S4 project homepage: frequency-localized sensitivity + phase-coherent bandlimiting (PC-band) for S4 training." />
+    <meta name="description" content="Topo_S4 project homepage: frequency-localized sensitivity + phase-coherence preprocessing (PC-band / PC-weight) for S4 training." />
     <title>Topo_S4</title>
 
     <link rel="manifest" href="./manifest.webmanifest" />
@@ -45,7 +45,7 @@
       <h1>Topo_S4</h1>
       <p class="muted">
         Work-in-progress research project: frequency-localized sensitivity (near-Nyquist vulnerability) and
-        phase-coherent bandlimiting (PC-band) for stable S4-family training.
+        phase-coherence preprocessing (<strong>PC-band</strong> / <strong>PC-weight</strong>) for stable S4-family training.
       </p>
 
       <section class="card">
@@ -132,6 +132,38 @@
             </tr>
           </tbody>
         </table>
+
+        <h3 style="margin-top: 18px;">4) Pathfinder32 added (pilot sweeps; 5 epochs)</h3>
+        <p class="muted" style="margin-bottom: 6px;">
+          Some datasets / long-sequence settings are large in my environment (e.g., SC35 is ~90 min/epoch),
+          so I run short <strong>5-epoch</strong> sweeps to select PC keep-budgets before full-epoch runs.
+          These pilots are for selection/effect-direction checks (not final numbers).
+          Scope ablation helps identify distribution shift when applying preprocessing only at evaluation time.
+        </p>
+
+        <table aria-label="Pathfinder32 pilot scope ablation table">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>scope</th>
+              <th>budget</th>
+              <th>Test @ Best Dev (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Raw</td><td>both</td><td>--</td><td>77.00</td></tr>
+            <tr><td>PC-band</td><td>train</td><td>keep_ratio=0.90</td><td>77.37</td></tr>
+            <tr><td>PC-band</td><td>test</td><td>keep_ratio=0.90</td><td>76.10</td></tr>
+            <tr><td>PC-band</td><td>both</td><td>keep_ratio=0.90</td><td>76.79</td></tr>
+            <tr><td>PC-weight</td><td>train</td><td>target_mean_w=0.40</td><td>52.40</td></tr>
+            <tr><td>PC-weight</td><td>test</td><td>target_mean_w=0.40</td><td>49.93</td></tr>
+            <tr><td>PC-weight</td><td>both</td><td>target_mean_w=0.40</td><td>77.76</td></tr>
+          </tbody>
+        </table>
+
+        <p class="muted" style="margin-top: 8px;">
+          Next: add full-epoch results for the selected PC settings, then evaluate on SC35 after narrowing down the keep-budget grid.
+        </p>
       </section>
 
       <section class="card">
@@ -145,7 +177,7 @@
         </ul>
       </section>
 
-      <p class="muted">Last updated: 2026-02-15.</p>
+      <p class="muted">Last updated: 2026-02-22.</p>
     </main>
 
     <script>
