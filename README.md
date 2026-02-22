@@ -1,6 +1,6 @@
 # Topo_S4 (WIP)
-**Frequency-localized sensitivity** in sequence models (S4/S4D) and a simple mitigation via
-**PC-band: phase-coherent bandlimiting** (offline → cache).
+**Frequency-localized sensitivity** in sequence models (S4/S4D) and simple mitigations via
+**PC-band** (phase-coherent bandlimiting) and **PC-weight** (phase-coherent weighting).
 
 Project homepage: https://dongyeongkim22.github.io/Topo_S4/  
 Overleaf draft: https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec  
@@ -30,17 +30,13 @@ training/evaluation can exhibit sharper degradation.
   - `filter_both`: evaluate `F(u + δ)` (filter can remove the injected perturbation)
   - `filter_then_pert`: evaluate `F(u) + δ` (perturbation stays intact → probes post-filter sensitivity)
 - **PC-band (phase-coherent bandlimiting)** preprocessing:
-  offline estimation of an effective bandwidth + cached smooth roll-off mask.
+  offline estimation of an effective bandwidth + cached roll-off mask (keep-budget via `--pc_keep_ratio`).
+- **PC-weight (phase-coherent weighting)** preprocessing:
+  soft mask with keep-budget via `--pc_target_mean_w` (automatic tau search to match mean(W)).
+- **preproc_scope ablation** (`train` / `test` / `both`) to check distribution shift and generalization
+  when applying PC during training vs evaluation.
 
----
-
-## PC-band method (offline → cache)
-1. Compute FFT/STFT over training data.
-2. Apply amplitude gating (phase is unreliable at low magnitude).
-3. Measure inter-frame **phase coherence** per frequency bin (phasor coherence).
-4. Derive dataset-level cutoff Ω_max < π and build a smooth roll-off mask W(Ω)
-   (optionally with a guard band near π).
-5. Preprocess once and cache → **no per-step overhead**.
+> Note: the **mask is computed once and cached**; it is applied during training/evaluation.
 
 ---
 
@@ -63,7 +59,7 @@ S4D, seeds 0/1/2 (preliminary). PC-band keep_ratio=0.90 improves mean best test 
 | Raw | -- | 36.42 | 0.00 |
 | PC-band | 0.90 | 37.41 | +0.99 |
 
-> If you want the per-seed breakdown in the README, add the run logs (or a CSV summary) and we can auto-generate the table.
+> Per-seed breakdown can be added later once final settings are chosen.
 
 ---
 
@@ -77,6 +73,30 @@ This is mainly to validate the preprocessing pipeline end-to-end; effects are sm
 
 ---
 
+### 4) Pathfinder32 added (pilot sweeps; 5 epochs)
+Compute is currently the main bottleneck, so I run **short 5-epoch sweeps** to narrow down promising
+PC hyperparameters before doing full-epoch runs. These pilots are **for hyperparameter selection / effect direction**,
+not final reported results.
+
+**Trend:** applying PC **consistently during training and evaluation** (`preproc_scope=both`) tends to generalize better
+than mismatched scopes (especially for **PC-weight**, which can collapse under scope mismatch).
+
+Pathfinder32 (seed 0, **5 epochs**; metric = **test @ best dev**):
+
+| Setting | scope | budget | Test @ Best Dev (%) |
+|---|---|---:|---:|
+| Raw | both | -- | 77.00 |
+| PC-band | both | keep_ratio=0.90 | 76.79 |
+| PC-weight | both | target_mean_w=0.40 | 77.76 |
+
+Scope mismatch example (same pilot setting):
+- PC-weight (target_mean_w=0.40, **scope=test-only**): 49.93 (large drop → distribution shift)
+
+> Next: add **full-epoch** results for the selected PC settings. After narrowing down hyperparameters,
+> evaluate on **SC35** (compute-heavy in my setup: ~90 min/epoch).
+
+---
+
 ## Repro (minimal notes)
 - Track definitions:
   - `filter_both`: `F(u+δ)`
@@ -86,8 +106,9 @@ This is mainly to validate the preprocessing pipeline end-to-end; effects are sm
 ---
 
 ## Status
-Work in progress. Next steps:
-- Complete keep_ratio sweep for PC-band.
-- Add stability metrics (loss spikes, NaN/Inf, grad-norm percentiles).
-- Compare S4D vs Transformer on multiple datasets.
+Work in progress.
 
+Next steps:
+- Continue keep-budget selection with short sweeps (≤5 epochs) under limited compute.
+- Run **full epochs** (paper-aligned settings) for the best PC-band / PC-weight configurations.
+- Move to **SC35** (≈90 min/epoch in my setup) after narrowing down hyperparameters.
