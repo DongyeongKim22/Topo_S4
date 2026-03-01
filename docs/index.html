@@ -1,83 +1,213 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#111827" />
-    <meta name="description" content="Topo_S4 project homepage: frequency-localized sensitivity + phase-coherence preprocessing (PC-band / PC-weight) for S4 training." />
+    <meta
+      name="description"
+      content="Topo_S4 project homepage: frequency-localized sensitivity and phase-coherence preprocessing (PC-band / PC-weight) for stable S4-family training."
+    />
     <title>Topo_S4</title>
 
     <link rel="manifest" href="./manifest.webmanifest" />
 
     <style>
-      :root { color-scheme: light dark; }
+      :root {
+        color-scheme: light dark;
+      }
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-        line-height: 1.55;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        line-height: 1.6;
       }
-      main { max-width: 980px; margin: 40px auto; padding: 0 16px; }
-      h1 { margin-bottom: 8px; }
-      .muted { opacity: 0.75; }
+      main {
+        max-width: 1020px;
+        margin: 40px auto;
+        padding: 0 16px 36px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      h3 {
+        margin-bottom: 8px;
+      }
+      p {
+        margin-top: 0;
+      }
+      .muted {
+        opacity: 0.78;
+      }
       .card {
-        border: 1px solid rgba(127,127,127,0.25);
-        border-radius: 12px;
-        padding: 16px;
+        border: 1px solid rgba(127, 127, 127, 0.25);
+        border-radius: 14px;
+        padding: 18px;
         margin: 16px 0;
       }
-      figure { margin: 0; }
+      .hero {
+        padding: 6px 0 4px;
+      }
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 0;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(127, 127, 127, 0.28);
+        font-size: 0.9rem;
+      }
+      .completed {
+        font-weight: 600;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+      }
+      .mini {
+        border: 1px solid rgba(127, 127, 127, 0.22);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      figure {
+        margin: 0;
+      }
       img.responsive {
         max-width: 100%;
         height: auto;
         border-radius: 10px;
-        border: 1px solid rgba(127,127,127,0.25);
+        border: 1px solid rgba(127, 127, 127, 0.25);
       }
-      figcaption { margin-top: 8px; font-size: 0.95rem; }
-      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-      th, td { border-bottom: 1px solid rgba(127,127,127,0.25); padding: 8px 6px; text-align: left; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-      ul { margin-top: 8px; }
+      figcaption {
+        margin-top: 8px;
+        font-size: 0.95rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid rgba(127, 127, 127, 0.25);
+        padding: 8px 6px;
+        text-align: left;
+        vertical-align: top;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      ul {
+        margin-top: 8px;
+      }
+      .callout {
+        border-left: 4px solid rgba(127, 127, 127, 0.4);
+        padding-left: 12px;
+        margin: 12px 0 0;
+      }
+      details {
+        margin-top: 12px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
     </style>
   </head>
 
   <body>
     <main>
-      <h1>Topo_S4</h1>
-      <p class="muted">
-        Work-in-progress research project: frequency-localized sensitivity (near-Nyquist vulnerability) and
-        phase-coherence preprocessing (<strong>PC-band</strong> / <strong>PC-weight</strong>) for stable S4-family training.
-      </p>
+      <section class="hero">
+        <h1>Topo_S4</h1>
+        <p class="muted">
+          Work-in-progress research project on <strong>frequency-localized sensitivity</strong>
+          (including near-Nyquist vulnerability) and <strong>phase-coherence preprocessing</strong>
+          (<strong>PC-band</strong> / <strong>PC-weight</strong>) for stable S4-family training.
+        </p>
+        <div class="badges" aria-label="project tags">
+          <span class="badge">S4 / S4D</span>
+          <span class="badge">Spectral robustness</span>
+          <span class="badge">Sequential CIFAR</span>
+          <span class="badge">Pathfinder32</span>
+          <span class="badge">Phase coherence</span>
+        </div>
+      </section>
 
       <section class="card">
         <h2>Links</h2>
         <ul>
-          <li><a href="https://dongyeongkim22.github.io/Topo_S4/">Website (this page)</a></li>
+          <li><a href="https://dongyeongkim22.github.io/Topo_S4/">Project page</a></li>
           <li><a href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">Overleaf Draft</a></li>
           <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub Repo</a></li>
         </ul>
       </section>
 
       <section class="card">
-        <h2>Latest Results (Preliminary)</h2>
+        <h2>What changed this week</h2>
+        <div class="grid">
+          <div class="mini">
+            <div class="badge completed">Completed</div>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+              Added <strong>full-epoch LRA Image / sequential CIFAR-10 scope-ablation</strong>
+              runs (200 epochs, seed 0) for raw, PC-band, and PC-weight.
+            </p>
+          </div>
+          <div class="mini">
+            <div class="badge completed">Finding</div>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+              <strong>Raw</strong> remains the strongest checkpoint-selection baseline,
+              while <strong>PC-band with <code>preproc_scope=train</code></strong>
+              gives the best peak and final test accuracy among the tested PC settings.
+            </p>
+          </div>
+          <div class="mini">
+            <div class="badge">In progress</div>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+              Pathfinder32 via the earlier <strong>pickle-based pipeline</strong> was too slow,
+              so I am now moving to a <strong>direct dataset download/loading</strong> path.
+            </p>
+          </div>
+          <div class="mini">
+            <div class="badge">Next decision point</div>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+              Pathfinder32 will likely decide whether fixed dataset-level PC masks are enough,
+              or whether to move toward <strong>learned PC optimization</strong>
+              such as a <strong>GNN-based mask optimizer</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Latest Results</h2>
 
         <h3>1) Frequency-localized vulnerability on CIFAR-10 (S4D)</h3>
         <figure>
           <img
             class="responsive"
-            src="eval_lpf070_072_track2_rel005_s4d_cifar10_rho_sweep_acc.png""
+            src="eval_lpf070_072_track2_rel005_s4d_cifar10_rho_sweep_acc.png"
             alt="Accuracy vs rho on CIFAR-10 with single-mode perturbation; sharp drop near Nyquist."
             loading="lazy"
           />
           <figcaption class="muted">
             <strong>Accuracy vs. perturbation frequency</strong> (ρ = 1.0 is Nyquist).
-            Setting: s4d | cifar10 | target relΔ=0.05 | preproc=lpf(test) | track=filter_then_pert.
-            Clean accuracy is stable; perturbed accuracy drops sharply near high ρ (near-Nyquist).
+            Setting: S4D | CIFAR-10 | target relΔ = 0.05 | preproc = LPF(test) |
+            track = filter_then_pert. Clean accuracy stays relatively stable,
+            while perturbed accuracy drops sharply near high ρ (near Nyquist).
           </figcaption>
         </figure>
 
-        <h3 style="margin-top: 18px;">2) PC-band on DTD96 (S4D, seeds 0/1/2)</h3>
+        <h3 style="margin-top: 22px;">2) PC-band on DTD96 (S4D, seeds 0/1/2)</h3>
         <p class="muted" style="margin-bottom: 6px;">
-          Summary from three-seed runs (preliminary): PC-band with keep_ratio=0.90 improves mean best test accuracy.
+          Preliminary three-seed result: PC-band with <code>keep_ratio = 0.90</code>
+          improves mean best test accuracy over raw.
         </p>
         <table aria-label="DTD96 PC-band results table">
           <thead>
@@ -104,14 +234,15 @@
           </tbody>
         </table>
 
-        <h3 style="margin-top: 18px;">3) PC-band sanity check on sCIFAR10 (S4D, seed 0)</h3>
+        <h3 style="margin-top: 22px;">3) LRA Image / sequential CIFAR-10 full-epoch scope ablation (200 epochs, seed 0)</h3>
         <p class="muted" style="margin-bottom: 6px;">
-          Small-effect regime example; mainly used to validate the preprocessing pipeline.
+          This is the strongest completed scope-ablation result so far on the image-side benchmark.
         </p>
-        <table aria-label="sCIFAR10 PC-band sanity check table">
+        <table aria-label="LRA Image full-epoch scope ablation table">
           <thead>
             <tr>
               <th>Setting</th>
+              <th>Scope</th>
               <th>Best Val (%)</th>
               <th>Test @ Best Val (%)</th>
               <th>Best Test (%)</th>
@@ -120,64 +251,150 @@
           <tbody>
             <tr>
               <td>Raw</td>
-              <td>89.08</td>
-              <td>88.69</td>
-              <td>88.78</td>
+              <td>both</td>
+              <td>86.72</td>
+              <td><strong>85.73</strong></td>
+              <td>85.73</td>
             </tr>
             <tr>
-              <td>PC-band (keep_ratio=0.80)</td>
-              <td>89.16</td>
-              <td>88.54</td>
-              <td>88.58</td>
+              <td>PC-band</td>
+              <td>train</td>
+              <td>86.56</td>
+              <td>85.62</td>
+              <td><strong>85.95</strong></td>
+            </tr>
+            <tr>
+              <td>PC-band</td>
+              <td>test</td>
+              <td>85.86</td>
+              <td>84.62</td>
+              <td>84.98</td>
+            </tr>
+            <tr>
+              <td>PC-band</td>
+              <td>both</td>
+              <td>86.00</td>
+              <td>84.75</td>
+              <td>84.75</td>
+            </tr>
+            <tr>
+              <td>PC-weight</td>
+              <td>train</td>
+              <td>83.42</td>
+              <td>81.86</td>
+              <td>82.11</td>
+            </tr>
+            <tr>
+              <td>PC-weight</td>
+              <td>both</td>
+              <td>86.16</td>
+              <td>85.31</td>
+              <td>85.32</td>
             </tr>
           </tbody>
         </table>
 
-        <h3 style="margin-top: 18px;">4) Pathfinder32 added (pilot sweeps; 5 epochs)</h3>
-        <p class="muted" style="margin-bottom: 6px;">
-          Some datasets / long-sequence settings are large in my environment (e.g., SC35 is ~90 min/epoch),
-          so I run short <strong>5-epoch</strong> sweeps to select PC keep-budgets before full-epoch runs.
-          These pilots are for selection/effect-direction checks (not final numbers).
-          Scope ablation helps identify distribution shift when applying preprocessing only at evaluation time.
+        <ul>
+          <li><strong>Raw remains a very strong baseline</strong>: it gives the best validation accuracy and the best <code>test @ best val</code>.</li>
+          <li><strong>PC-band with <code>scope=train</code> gives the best peak/final test accuracy</strong> among the tested PC settings.</li>
+          <li>Relative to applying the same PC-band mask at <code>scope=both</code> or <code>scope=test</code>, <code>scope=train</code> gives about <strong>+0.9 to +1.0 pp</strong> test-side gain.</li>
+          <li><strong>PC-weight is highly scope-sensitive</strong>: <code>scope=both</code> remains competitive, while <code>scope=train</code> drops sharply.</li>
+        </ul>
+
+        <p class="callout muted">
+          <strong>Working interpretation.</strong>
+          Sequential CIFAR-10 appears to be a comparatively low-frequency-dominated case,
+          so dev and test stay fairly close overall. Even in that milder regime,
+          preprocessing scope still changes test-side generalization by about 1 percentage point.
         </p>
 
+        <h3 style="margin-top: 22px;">4) Pathfinder32 pilot sweeps (5 epochs) + current pipeline status</h3>
+        <p class="muted" style="margin-bottom: 6px;">
+          These short pilot runs are used to select keep-budgets and check effect direction before longer runs.
+          They are <strong>not</strong> final numbers.
+        </p>
         <table aria-label="Pathfinder32 pilot scope ablation table">
           <thead>
             <tr>
               <th>Setting</th>
-              <th>scope</th>
-              <th>budget</th>
+              <th>Scope</th>
+              <th>Budget</th>
               <th>Test @ Best Dev (%)</th>
             </tr>
           </thead>
           <tbody>
             <tr><td>Raw</td><td>both</td><td>--</td><td>77.00</td></tr>
-            <tr><td>PC-band</td><td>train</td><td>keep_ratio=0.90</td><td>77.37</td></tr>
-            <tr><td>PC-band</td><td>test</td><td>keep_ratio=0.90</td><td>76.10</td></tr>
-            <tr><td>PC-band</td><td>both</td><td>keep_ratio=0.90</td><td>76.79</td></tr>
-            <tr><td>PC-weight</td><td>train</td><td>target_mean_w=0.40</td><td>52.40</td></tr>
-            <tr><td>PC-weight</td><td>test</td><td>target_mean_w=0.40</td><td>49.93</td></tr>
-            <tr><td>PC-weight</td><td>both</td><td>target_mean_w=0.40</td><td>77.76</td></tr>
+            <tr><td>PC-band</td><td>train</td><td>keep_ratio = 0.90</td><td>77.37</td></tr>
+            <tr><td>PC-band</td><td>test</td><td>keep_ratio = 0.90</td><td>76.10</td></tr>
+            <tr><td>PC-band</td><td>both</td><td>keep_ratio = 0.90</td><td>76.79</td></tr>
+            <tr><td>PC-weight</td><td>train</td><td>target_mean_w = 0.40</td><td>52.40</td></tr>
+            <tr><td>PC-weight</td><td>test</td><td>target_mean_w = 0.40</td><td>49.93</td></tr>
+            <tr><td>PC-weight</td><td>both</td><td>target_mean_w = 0.40</td><td>77.76</td></tr>
           </tbody>
         </table>
 
-        <p class="muted" style="margin-top: 8px;">
-          Next: add full-epoch results for the selected PC settings, then evaluate on SC35 after narrowing down the keep-budget grid.
+        <p class="callout muted">
+          <strong>Engineering note.</strong>
+          The earlier pickle-based Pathfinder32 pipeline turned out to be too slow for the next stage of experiments.
+          I am currently switching to a direct dataset download/loading workflow before launching the next round.
         </p>
+
+        <p class="muted" style="margin-top: 10px;">
+          Pathfinder32 may be the more decisive benchmark for choosing the next research direction,
+          because it may stress higher-frequency structure more strongly than sequential CIFAR-10.
+        </p>
+
+        <details>
+          <summary>Older sanity check (archived): sCIFAR10 PC-band seed-0 result</summary>
+          <p class="muted" style="margin-top: 8px; margin-bottom: 6px;">
+            Small-effect regime example that was mainly used to validate the preprocessing pipeline.
+          </p>
+          <table aria-label="Archived sCIFAR10 sanity check table">
+            <thead>
+              <tr>
+                <th>Setting</th>
+                <th>Best Val (%)</th>
+                <th>Test @ Best Val (%)</th>
+                <th>Best Test (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Raw</td>
+                <td>89.08</td>
+                <td>88.69</td>
+                <td>88.78</td>
+              </tr>
+              <tr>
+                <td>PC-band (keep_ratio = 0.80)</td>
+                <td>89.16</td>
+                <td>88.54</td>
+                <td>88.58</td>
+              </tr>
+            </tbody>
+          </table>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>Current direction</h2>
+        <ul>
+          <li>Finish the Pathfinder32 direct dataset pipeline and rerun the next pilot/full-epoch settings.</li>
+          <li>Use Pathfinder32 to decide whether fixed dataset-level masks are sufficient.</li>
+          <li>If higher-frequency-heavy settings show clearer gains, move toward <strong>learned PC optimization</strong>, for example a <strong>GNN-based optimizer</strong> over frequency-bin relations.</li>
+          <li>Return to SC35 and other longer-sequence settings after narrowing the keep-budget search.</li>
+        </ul>
       </section>
 
       <section class="card">
         <h2>Repro (very short)</h2>
         <ul>
           <li>Run scripts and flags are documented in the repo.</li>
-          <li>
-            Track definitions:
-            <code>filter_both: F(u+δ)</code>, <code>filter_then_pert: F(u)+δ</code>
-          </li>
+          <li>Track definitions: <code>filter_both: F(u + δ)</code>, <code>filter_then_pert: F(u) + δ</code>.</li>
         </ul>
       </section>
 
-      <p class="muted">Last updated: 2026-02-22.</p>
+      <p class="muted">Last updated: 2026-03-01.</p>
     </main>
 
     <script>
