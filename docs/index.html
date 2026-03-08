@@ -6,16 +6,14 @@
     <meta name="theme-color" content="#111827" />
     <meta
       name="description"
-      content="Topo_S4 project homepage: frequency-localized sensitivity and phase-coherence preprocessing (PC-band / PC-weight) for stable S4-family training."
+      content="Topo_S4 project homepage: dynamic persistent-homology masking for S4/S4ND, frequency-localized sensitivity, and structure-aware spectral control."
     />
     <title>Topo_S4</title>
 
     <link rel="manifest" href="./manifest.webmanifest" />
 
     <style>
-      :root {
-        color-scheme: light dark;
-      }
+      :root { color-scheme: light dark; }
       body {
         margin: 0;
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
@@ -26,30 +24,18 @@
         margin: 40px auto;
         padding: 0 16px 36px;
       }
-      h1 {
-        margin-bottom: 8px;
-      }
-      h2 {
-        margin-top: 0;
-      }
-      h3 {
-        margin-bottom: 8px;
-      }
-      p {
-        margin-top: 0;
-      }
-      .muted {
-        opacity: 0.78;
-      }
+      h1 { margin-bottom: 8px; }
+      h2 { margin-top: 0; }
+      h3 { margin-bottom: 8px; }
+      p { margin-top: 0; }
+      .muted { opacity: 0.78; }
       .card {
         border: 1px solid rgba(127, 127, 127, 0.25);
         border-radius: 14px;
         padding: 18px;
         margin: 16px 0;
       }
-      .hero {
-        padding: 6px 0 4px;
-      }
+      .hero { padding: 6px 0 4px; }
       .badges {
         display: flex;
         flex-wrap: wrap;
@@ -63,9 +49,7 @@
         border: 1px solid rgba(127, 127, 127, 0.28);
         font-size: 0.9rem;
       }
-      .completed {
-        font-weight: 600;
-      }
+      .completed { font-weight: 600; }
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -76,9 +60,7 @@
         border-radius: 12px;
         padding: 12px;
       }
-      figure {
-        margin: 0;
-      }
+      figure { margin: 0; }
       img.responsive {
         max-width: 100%;
         height: auto;
@@ -94,8 +76,7 @@
         border-collapse: collapse;
         margin-top: 8px;
       }
-      th,
-      td {
+      th, td {
         border-bottom: 1px solid rgba(127, 127, 127, 0.25);
         padding: 8px 6px;
         text-align: left;
@@ -104,20 +85,19 @@
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       }
-      ul {
-        margin-top: 8px;
-      }
+      ul { margin-top: 8px; }
       .callout {
         border-left: 4px solid rgba(127, 127, 127, 0.4);
         padding-left: 12px;
         margin: 12px 0 0;
       }
-      details {
-        margin-top: 12px;
-      }
-      summary {
-        cursor: pointer;
-        font-weight: 600;
+      details { margin-top: 12px; }
+      summary { cursor: pointer; font-weight: 600; }
+      .wordbox {
+        border: 1px dashed rgba(127, 127, 127, 0.35);
+        border-radius: 10px;
+        padding: 14px;
+        background: rgba(127, 127, 127, 0.05);
       }
     </style>
   </head>
@@ -127,16 +107,18 @@
       <section class="hero">
         <h1>Topo_S4</h1>
         <p class="muted">
-          Work-in-progress research project on <strong>frequency-localized sensitivity</strong>
-          (including near-Nyquist vulnerability) and <strong>phase-coherence preprocessing</strong>
-          (<strong>PC-band</strong> / <strong>PC-weight</strong>) for stable S4-family training.
+          Work-in-progress research project on <strong>frequency-localized sensitivity</strong>,
+          <strong>sample-wise dynamic persistent-homology masking</strong>, and
+          <strong>structure-aware spectral control</strong> for the S4 family
+          (<strong>S4 / S4D / S4ND</strong>).
         </p>
         <div class="badges" aria-label="project tags">
           <span class="badge">S4 / S4D</span>
+          <span class="badge">S4ND</span>
+          <span class="badge">Persistent Homology</span>
           <span class="badge">Spectral robustness</span>
-          <span class="badge">Sequential CIFAR</span>
           <span class="badge">Pathfinder32</span>
-          <span class="badge">Phase coherence</span>
+          <span class="badge">SC35</span>
         </div>
       </section>
 
@@ -144,8 +126,8 @@
         <h2>Links</h2>
         <ul>
           <li><a href="https://dongyeongkim22.github.io/Topo_S4/">Project page</a></li>
-          <li><a href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">Overleaf Draft</a></li>
-          <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub Repo</a></li>
+          <li><a href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">Overleaf draft</a></li>
+          <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub repo</a></li>
         </ul>
       </section>
 
@@ -153,248 +135,124 @@
         <h2>What changed this week</h2>
         <div class="grid">
           <div class="mini">
-            <div class="badge completed">Completed</div>
+            <div class="badge completed">Pipeline</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Added <strong>full-epoch LRA Image / sequential CIFAR-10 scope-ablation</strong>
-              runs (200 epochs, seed 0) for raw, PC-band, and PC-weight.
+              Replaced the slow Pathfinder32 file-by-file loader with a one-time
+              <strong><code>.pt</code> RAM-caching pipeline</strong>, cutting startup from
+              roughly <strong>8 hours</strong> to <strong>under 3 minutes</strong> on Colab local SSDs.
             </p>
           </div>
           <div class="mini">
-            <div class="badge completed">Finding</div>
+            <div class="badge completed">Method pivot</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              <strong>Raw</strong> remains the strongest checkpoint-selection baseline,
-              while <strong>PC-band with <code>preproc_scope=train</code></strong>
-              gives the best peak and final test accuracy among the tested PC settings.
+              Shifted from <strong>global dataset-level PC masks</strong> toward
+              <strong>sample-wise dynamic PH masking</strong> with exact H0 superlevel persistence
+              and a lightweight controller predicting <code>τ</code> and <code>α</code> per sample.
             </p>
           </div>
           <div class="mini">
-            <div class="badge">In progress</div>
+            <div class="badge">Finding</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Pathfinder32 via the earlier <strong>pickle-based pipeline</strong> was too slow,
-              so I am now moving to a <strong>direct dataset download/loading</strong> path.
+              In <strong>1D flattened-image experiments</strong>, the controller collapsed to a
+              near-identity regime, consistent with <strong>flattening-induced spectral distortion</strong>
+              rather than a failure of the PH controller itself.
             </p>
           </div>
           <div class="mini">
-            <div class="badge">Next decision point</div>
+            <div class="badge">Validation</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Pathfinder32 will likely decide whether fixed dataset-level PC masks are enough,
-              or whether to move toward <strong>learned PC optimization</strong>
-              such as a <strong>GNN-based mask optimizer</strong>.
+              In <strong>2D S4ND + 2D PH masking</strong>, the controller became active:
+              <code>τ</code> increased substantially and the pass ratio decreased, showing that the
+              masking module engages once spatial structure is preserved.
             </p>
           </div>
         </div>
       </section>
 
       <section class="card">
-        <h2>Latest Results</h2>
+        <h2>Progress detail (≤ 300 words)</h2>
+        <div class="wordbox">
+          <p>
+            This week I optimized the Pathfinder32 data pipeline and pivoted the masking strategy from
+            global dataset-level PC masks to sample-wise dynamic PH control. First, I replaced the previous
+            file-by-file Pathfinder32 loader with a one-time <code>.pt</code> RAM-caching pipeline,
+            reducing startup time from roughly 8 hours to under 3 minutes on Colab local SSDs.
+            This removed the main systems bottleneck from last week.
+          </p>
+          <p>
+            Methodologically, I moved away from learned global masks and implemented exact
+            <em>O(N log N)</em> PH-based dynamic masking. For each sample, exact H0 superlevel persistence
+            is computed on the spectrum, and a lightweight MLP predicts mask threshold <code>τ</code>
+            and sharpness <code>α</code>. The goal is to preserve informative spectral structure while
+            attenuating noisy components adaptively.
+          </p>
+          <p>
+            In 1D flattened-image experiments (LRA Image / flattened Pathfinder32), the controller
+            consistently collapsed to a near-identity regime: <code>τ → 0.05</code> and pass ratio
+            <code>≈ 0.99</code>, leading to only marginal accuracy changes. This behavior is consistent
+            with a dimensional-mismatch explanation: flattening 2D images into 1D introduces
+            raster-scan spectral distortion, so strong 1D masking would likely destroy real spatial edges.
+          </p>
+          <p style="margin-bottom: 0;">
+            To test that diagnosis, I migrated Pathfinder32 to a 2D S4ND + 2D PH masking setup.
+            In this structure-preserving setting, the controller became active: <code>τ</code> rose from
+            about 0.15 to 0.67 and the actual pass ratio dropped substantially. Although baseline S4ND
+            accuracy is still unoptimized (~53%), the masking mechanism now behaves as intended.
+            Next week, I will evaluate the 1D PH controller on native 1D data (SC35), where no 2D→1D
+            flattening distortion is present.
+          </p>
+        </div>
+      </section>
 
-        <h3>1) Frequency-localized vulnerability on CIFAR-10 (S4D)</h3>
+      <section class="card">
+        <h2>Mechanistic validation</h2>
         <figure>
           <img
             class="responsive"
-            src="eval_lpf070_072_track2_rel005_s4d_cifar10_rho_sweep_acc.png"
-            alt="Accuracy vs rho on CIFAR-10 with single-mode perturbation; sharp drop near Nyquist."
+            src="ph_masking_trajectory.png"
+            alt="Trajectory of masking threshold tau and actual spectrum pass ratio for 2D S4ND plus 2D PH masking versus collapsed 1D baseline."
             loading="lazy"
           />
           <figcaption class="muted">
-            <strong>Accuracy vs. perturbation frequency</strong> (ρ = 1.0 is Nyquist).
-            Setting: S4D | CIFAR-10 | target relΔ = 0.05 | preproc = LPF(test) |
-            track = filter_then_pert. Clean accuracy stays relatively stable,
-            while perturbed accuracy drops sharply near high ρ (near Nyquist).
+            <strong>2D S4ND + 2D PH masking activates the controller.</strong>
+            Relative to the earlier 1D flattened-image setting, the 2D structure-preserving model shows
+            a clear rise in <code>τ</code> and a corresponding drop in actual spectrum pass ratio.
+            This is more consistent with a dimensional-mismatch issue in 1D flattened images than with
+            a failure of the PH controller itself.
           </figcaption>
         </figure>
 
-        <h3 style="margin-top: 22px;">2) PC-band on DTD96 (S4D, seeds 0/1/2)</h3>
-        <p class="muted" style="margin-bottom: 6px;">
-          Preliminary three-seed result: PC-band with <code>keep_ratio = 0.90</code>
-          improves mean best test accuracy over raw.
-        </p>
-        <table aria-label="DTD96 PC-band results table">
-          <thead>
-            <tr>
-              <th>Setting</th>
-              <th>keep_ratio</th>
-              <th>Mean Best Test (%)</th>
-              <th>Δ vs Raw (pp)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Raw</td>
-              <td>--</td>
-              <td>36.42</td>
-              <td>0.00</td>
-            </tr>
-            <tr>
-              <td>PC-band</td>
-              <td>0.90</td>
-              <td>37.41</td>
-              <td>+0.99</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 style="margin-top: 22px;">3) LRA Image / sequential CIFAR-10 full-epoch scope ablation (200 epochs, seed 0)</h3>
-        <p class="muted" style="margin-bottom: 6px;">
-          This is the strongest completed scope-ablation result so far on the image-side benchmark.
-        </p>
-        <table aria-label="LRA Image full-epoch scope ablation table">
-          <thead>
-            <tr>
-              <th>Setting</th>
-              <th>Scope</th>
-              <th>Best Val (%)</th>
-              <th>Test @ Best Val (%)</th>
-              <th>Best Test (%)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Raw</td>
-              <td>both</td>
-              <td>86.72</td>
-              <td><strong>85.73</strong></td>
-              <td>85.73</td>
-            </tr>
-            <tr>
-              <td>PC-band</td>
-              <td>train</td>
-              <td>86.56</td>
-              <td>85.62</td>
-              <td><strong>85.95</strong></td>
-            </tr>
-            <tr>
-              <td>PC-band</td>
-              <td>test</td>
-              <td>85.86</td>
-              <td>84.62</td>
-              <td>84.98</td>
-            </tr>
-            <tr>
-              <td>PC-band</td>
-              <td>both</td>
-              <td>86.00</td>
-              <td>84.75</td>
-              <td>84.75</td>
-            </tr>
-            <tr>
-              <td>PC-weight</td>
-              <td>train</td>
-              <td>83.42</td>
-              <td>81.86</td>
-              <td>82.11</td>
-            </tr>
-            <tr>
-              <td>PC-weight</td>
-              <td>both</td>
-              <td>86.16</td>
-              <td>85.31</td>
-              <td>85.32</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <ul>
-          <li><strong>Raw remains a very strong baseline</strong>: it gives the best validation accuracy and the best <code>test @ best val</code>.</li>
-          <li><strong>PC-band with <code>scope=train</code> gives the best peak/final test accuracy</strong> among the tested PC settings.</li>
-          <li>Relative to applying the same PC-band mask at <code>scope=both</code> or <code>scope=test</code>, <code>scope=train</code> gives about <strong>+0.9 to +1.0 pp</strong> test-side gain.</li>
-          <li><strong>PC-weight is highly scope-sensitive</strong>: <code>scope=both</code> remains competitive, while <code>scope=train</code> drops sharply.</li>
-        </ul>
-
-        <p class="callout muted">
-          <strong>Working interpretation.</strong>
-          Sequential CIFAR-10 appears to be a comparatively low-frequency-dominated case,
-          so dev and test stay fairly close overall. Even in that milder regime,
-          preprocessing scope still changes test-side generalization by about 1 percentage point.
-        </p>
-
-        <h3 style="margin-top: 22px;">4) Pathfinder32 pilot sweeps (5 epochs) + current pipeline status</h3>
-        <p class="muted" style="margin-bottom: 6px;">
-          These short pilot runs are used to select keep-budgets and check effect direction before longer runs.
-          They are <strong>not</strong> final numbers.
-        </p>
-        <table aria-label="Pathfinder32 pilot scope ablation table">
-          <thead>
-            <tr>
-              <th>Setting</th>
-              <th>Scope</th>
-              <th>Budget</th>
-              <th>Test @ Best Dev (%)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Raw</td><td>both</td><td>--</td><td>77.00</td></tr>
-            <tr><td>PC-band</td><td>train</td><td>keep_ratio = 0.90</td><td>77.37</td></tr>
-            <tr><td>PC-band</td><td>test</td><td>keep_ratio = 0.90</td><td>76.10</td></tr>
-            <tr><td>PC-band</td><td>both</td><td>keep_ratio = 0.90</td><td>76.79</td></tr>
-            <tr><td>PC-weight</td><td>train</td><td>target_mean_w = 0.40</td><td>52.40</td></tr>
-            <tr><td>PC-weight</td><td>test</td><td>target_mean_w = 0.40</td><td>49.93</td></tr>
-            <tr><td>PC-weight</td><td>both</td><td>target_mean_w = 0.40</td><td>77.76</td></tr>
-          </tbody>
-        </table>
-
-        <p class="callout muted">
-          <strong>Engineering note.</strong>
-          The earlier pickle-based Pathfinder32 pipeline turned out to be too slow for the next stage of experiments.
-          I am currently switching to a direct dataset download/loading workflow before launching the next round.
-        </p>
-
-        <p class="muted" style="margin-top: 10px;">
-          Pathfinder32 may be the more decisive benchmark for choosing the next research direction,
-          because it may stress higher-frequency structure more strongly than sequential CIFAR-10.
-        </p>
-
-        <details>
-          <summary>Older sanity check (archived): sCIFAR10 PC-band seed-0 result</summary>
-          <p class="muted" style="margin-top: 8px; margin-bottom: 6px;">
-            Small-effect regime example that was mainly used to validate the preprocessing pipeline.
-          </p>
-          <table aria-label="Archived sCIFAR10 sanity check table">
-            <thead>
-              <tr>
-                <th>Setting</th>
-                <th>Best Val (%)</th>
-                <th>Test @ Best Val (%)</th>
-                <th>Best Test (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Raw</td>
-                <td>89.08</td>
-                <td>88.69</td>
-                <td>88.78</td>
-              </tr>
-              <tr>
-                <td>PC-band (keep_ratio = 0.80)</td>
-                <td>89.16</td>
-                <td>88.54</td>
-                <td>88.58</td>
-              </tr>
-            </tbody>
-          </table>
-        </details>
+        <div class="callout muted">
+          <strong>Interpretation.</strong>
+          In flattened 1D image experiments, the controller preferred a near-identity mask, suggesting
+          that aggressive 1D spectral pruning may erase genuine spatial edges created by rasterization.
+          Preserving 2D structure with S4ND makes the controller engage instead of collapse.
+        </div>
       </section>
 
       <section class="card">
         <h2>Current direction</h2>
         <ul>
-          <li>Finish the Pathfinder32 direct dataset pipeline and rerun the next pilot/full-epoch settings.</li>
-          <li>Use Pathfinder32 to decide whether fixed dataset-level masks are sufficient.</li>
-          <li>If higher-frequency-heavy settings show clearer gains, move toward <strong>learned PC optimization</strong>, for example a <strong>GNN-based optimizer</strong> over frequency-bin relations.</li>
-          <li>Return to SC35 and other longer-sequence settings after narrowing the keep-budget search.</li>
+          <li>Use <strong>SC35</strong> as the decisive next benchmark for native 1D validation.</li>
+          <li>Compare pure S4 against PH-masked S4 using both accuracy and controller trajectories (<code>τ</code>, pass ratio).</li>
+          <li>Keep Pathfinder32 as the image-side structure-preserving benchmark for S4ND + 2D PH masking.</li>
+          <li>Treat earlier global PC-band / PC-weight results as archived baselines rather than the current main direction.</li>
         </ul>
       </section>
 
       <section class="card">
-        <h2>Repro (very short)</h2>
-        <ul>
-          <li>Run scripts and flags are documented in the repo.</li>
-          <li>Track definitions: <code>filter_both: F(u + δ)</code>, <code>filter_then_pert: F(u) + δ</code>.</li>
-        </ul>
+        <h2>Archived earlier direction</h2>
+        <details>
+          <summary>Earlier PC-band / PC-weight results and notes</summary>
+          <p class="muted" style="margin-top: 10px;">
+            Earlier experiments focused on dataset-level phase-coherence masks (PC-band / PC-weight)
+            and scope ablations on sequential CIFAR-10 and Pathfinder32. These runs remain useful as
+            historical baselines, but the current active direction is sample-wise dynamic PH masking.
+          </p>
+        </details>
       </section>
 
-      <p class="muted">Last updated: 2026-03-01.</p>
+      <p class="muted">Last updated: 2026-03-08.</p>
     </main>
 
     <script>
