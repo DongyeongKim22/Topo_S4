@@ -1,6 +1,6 @@
 # Topo_S4 (WIP)
 
-**Frequency-localized sensitivity** in sequence models (S4/S4D) and simple mitigations via **PC-band** (phase-coherent bandlimiting) and **PC-weight** (phase-coherent weighting).
+**Frequency-localized sensitivity** in state space models (**S4 / S4D / S4ND**) and simple-to-adaptive spectral mitigations, from early **PC-band / PC-weight** preprocessing to the current **dynamic PH-masking** line.
 
 - **Project homepage:** https://dongyeongkim22.github.io/Topo_S4/
 - **Overleaf draft:** https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec
@@ -15,102 +15,113 @@ $$
 \frac{d\omega}{d\Omega}=\frac{1}{\Delta}\sec^2(\Omega/2)
 $$
 
-so sensitivity grows rapidly as `Ω` approaches `π`. If inputs contain strong near-Nyquist components, training and evaluation can exhibit sharper degradation.
+so sensitivity can grow rapidly as `Ω` approaches `π`. If inputs contain strong near-Nyquist components, training and evaluation may exhibit sharper degradation.
+
+The current question is no longer only **whether** high-frequency vulnerability exists, but also **how to localize and control it** without collapsing useful structure.
+
+## Current direction: Dynamic PH masking
+
+The repository started with **dataset-level PC masks**:
+- **PC-band**: phase-coherent hard bandlimiting
+- **PC-weight**: phase-coherent soft weighting
+
+The current active direction is **sample-wise dynamic PH masking**:
+- compute **exact PH descriptors** on each sample's spectrum,
+- predict masking parameters (e.g., `τ`, `α`) with a lightweight controller,
+- and apply a **sample-specific spectral mask** before the unchanged S4/S4ND backbone.
+
+This shift was motivated by a limitation of global PC masks: a dataset-wide prior can suppress weak-but-useful high-frequency structure by averaging it away.
 
 ## What this repo contains
 
-- **Single-mode Fourier injection benchmark**: sweep normalized frequency `ρ in [0, 1]` (`ρ=1` is Nyquist) and measure accuracy drop vs frequency.
+- **Single-mode Fourier injection benchmark**: sweep normalized frequency `ρ in [0, 1]` (`ρ=1` is Nyquist) and measure accuracy drop vs. frequency.
 - **Filtering baselines**: guard band and low-pass filtering.
-- **Two-track evaluation protocol** to disentangle “removing the perturbation” vs “changing sensitivity”:
+- **Two-track evaluation protocol** to disentangle “removing the perturbation” vs. “changing sensitivity”:
   - `filter_both`: evaluate `F(u + δ)`
   - `filter_then_pert`: evaluate `F(u) + δ`
-- **PC-band (phase-coherent bandlimiting)** preprocessing: offline estimation of an effective bandwidth plus a cached dataset-level hard mask (`--pc_keep_ratio`).
-- **PC-weight (phase-coherent weighting)** preprocessing: a soft mask with a keep-budget target (`--pc_target_mean_w`).
+- **PC-band / PC-weight** preprocessing: dataset-level spectral masks estimated once and cached.
+- **Dynamic PH masking (current)**:
+  - **1D S4 / S4D + 1D PH** for native 1D sequence settings,
+  - **2D S4ND + 2D PH** for image settings where preserving spatial structure is important.
 - **preproc_scope ablation** (`train` / `test` / `both`) to study distribution shift and scope-dependent generalization.
 
-> The PC mask is computed once and cached, then reused during training/evaluation.
+## Recent findings (current snapshot)
 
-## Results (current snapshot)
+### 1) From global PC to sample-wise PH
 
-### 1) sCIFAR10 / CIFAR10: accuracy vs frequency (`ρ` sweep)
+I implemented an exact **sample-wise PH-based dynamic masking module** that replaces the earlier dataset-level PC prior.
 
-Setting: `s4d | cifar10 | target relΔ=0.05 | preproc=lpf(test) | track=filter_then_pert`
+- For each sample, compute a spectral representation.
+- Extract exact PH features (currently H0 superlevel persistence in 1D/2D settings).
+- Use a small controller to predict masking parameters.
+- Apply the mask before the unchanged S4/S4ND backbone.
 
-![CIFAR10 rho sweep](assets/eval_lpf070_072_track2_rel005_s4d_cifar10_rho_sweep_acc.png)
+The target complexity remains near **`O(N log N)`**, where `N` is the number of candidate spectral cells/bins processed by the PH sweep.
 
-**Observation:** clean accuracy stays relatively stable, while perturbed accuracy drops sharply near **high `ρ`** (near Nyquist).
+### 2) 1D flattened-image experiments: controller collapse to near-identity
 
-### 2) DTD96: PC-band improves mean best test accuracy (3 seeds)
+Initial experiments on **sequential CIFAR-10 / flattened Pathfinder32** with **1D S4 + 1D PH masking** did **not** show a consistent clean-accuracy gain.
+Depending on the dataset and setting, the result was either marginally positive or slightly negative.
 
-S4D, seeds 0/1/2 (preliminary).
+The more important observation was mechanistic:
+- the masking threshold `τ` converged toward its lower bound,
+- the actual spectrum pass ratio stayed close to 1,
+- and the controller behaved like a **near-identity fail-safe**.
 
-| Setting | keep_ratio | Mean Best Test (%) | Delta vs Raw (pp) |
-|---|---:|---:|---:|
-| Raw | -- | 36.42 | 0.00 |
-| PC-band | 0.90 | 37.41 | +0.99 |
+A working interpretation is that **flattening a 2D image into a 1D sequence introduces flattening-induced spectral distortion**. In that setting, aggressive 1D spectral masking can damage real spatial structure (e.g., edges/shapes), so optimization prefers to keep the mask close to identity.
 
-### 3) LRA Image / sequential CIFAR-10: full-epoch scope ablation (200 epochs, seed 0)
+### 3) 2D validation with S4ND + 2D PH
 
-This is the strongest completed scope-ablation result so far on the image-side benchmark.
+To test whether the earlier collapse came from the PH mechanism itself or from the **2D → 1D mismatch**, I moved the image-side experiments to **S4ND + 2D PH masking**.
 
-| Setting | Scope | Best Val (%) | Test @ Best Val (%) | Best Test (%) |
-|---|---|---:|---:|---:|
-| Raw | both | 86.72 | **85.73** | 85.73 |
-| PC-band (`keep_ratio=0.95`) | train | 86.56 | 85.62 | **85.95** |
-| PC-band (`keep_ratio=0.95`) | test | 85.86 | 84.62 | 84.98 |
-| PC-band (`keep_ratio=0.95`) | both | 86.00 | 84.75 | 84.75 |
-| PC-weight (`target_mean_w=0.60`) | train | 83.42 | 81.86 | 82.11 |
-| PC-weight (`target_mean_w=0.60`) | both | 86.16 | 85.31 | 85.32 |
+On Pathfinder32, the controller now behaves very differently:
+- `τ` rises actively over training instead of collapsing to the minimum,
+- the actual spectrum pass ratio decreases substantially,
+- and the mask starts filtering rather than staying near identity.
 
-**Takeaways**
-- **Raw is still a very strong baseline**: it gives the best validation accuracy and the best `test @ best val` among the completed runs.
-- **PC-band with `preproc_scope=train` gives the best peak/final test accuracy** among the tested PC settings.
-- Relative to applying the same PC-band mask at `both` or `test`, **`scope=train` gives about +0.9 to +1.0 pp test-side gain**.
-- **PC-weight is highly scope-sensitive**: `scope=both` remains competitive, while `scope=train` drops sharply.
+This does **not** yet establish a strong final performance claim. Current Pathfinder32 numbers are still preliminary (roughly `50% -> 53%`), but the controller dynamics are much more informative: the masking module is now **actually engaging**.
 
-A working interpretation is that **sequential CIFAR-10 is comparatively low-frequency dominated**, so dev and test remain close overall. Even in that milder regime, scope choice still changes test-side generalization by about 1 pp.
+![Dynamic PH masking trajectories](assets/ph_masking_trajectory.png)
 
-### 4) Pathfinder32: pilot sweeps (5 epochs)
+**Interpretation:** the 2D result is more consistent with the intended mechanism. It suggests that the earlier 1D collapse is better explained by the **dimensional mismatch of flattening** than by a failure of PH itself.
 
-Some datasets and long-sequence settings are still expensive in my environment, so I use **short 5-epoch sweeps** to select promising keep-budgets before running longer confirmations.
+### 4) Why this matters for the next benchmark
 
-Pathfinder32 (seed 0, **5 epochs**; metric = **test @ best dev**):
+These results suggest a simple split:
+- **native 1D signals** should be studied with **1D S4/S4D + 1D PH**,
+- **native 2D images** should be studied with **S4ND + 2D PH** when the goal is to preserve the original spatial topology.
 
-| Setting | Scope | Budget | Test @ Best Dev (%) |
-|---|---|---:|---:|
-| Raw | both | -- | 77.00 |
-| PC-band | train | `keep_ratio=0.90` | 77.37 |
-| PC-band | test | `keep_ratio=0.90` | 76.10 |
-| PC-band | both | `keep_ratio=0.90` | 76.79 |
-| PC-weight | train | `target_mean_w=0.40` | 52.40 |
-| PC-weight | test | `target_mean_w=0.40` | 49.93 |
-| PC-weight | both | `target_mean_w=0.40` | 77.76 |
-
-**Pilot takeaway:** evaluation-only preprocessing can introduce distribution shift, and scope effects are especially strong for PC-weight.
-
-**Current engineering status:** Pathfinder32 full runs through a pickle-based pipeline were taking too long in my environment. I am now moving to a **direct dataset download/loading path** instead of the pickle packaging route before launching the next Pathfinder32 round.
+That makes **SC35** the next decisive benchmark.
 
 ## This week's progress update
 
-- Added **full-epoch LRA Image / sequential CIFAR-10** scope-ablation runs for `PC-band (keep_ratio=0.95)` and `PC-weight (target_mean_w=0.60)` against the raw baseline.
-- Confirmed that **raw remains the strongest checkpoint-selection baseline** on LRA Image, while **PC-band + `preproc_scope=train`** gives the best peak/final test accuracy among the tested PC settings.
-- Interpreted the LRA Image / CIFAR-10 result as a **comparatively low-frequency-dominated** case: dev and test stay fairly close, but scope choice still changes test-side generalization by about **1 percentage point**.
-- Reconfirmed that **PC-weight is much more fragile under scope mismatch** than PC-band.
-- Started migrating **Pathfinder32** away from the pickle-based pipeline because it is too slow for the next stage of experiments; direct dataset download/loading is now in progress.
-- The next research direction will likely be decided by **Pathfinder32**. If the higher-frequency-heavy setting shows clearer gains, a natural next step is **learned PC optimization**, for example a **GNN-based mask optimizer** over frequency-bin relations.
+- Reframed the project from **global, dataset-level PC masking** toward **sample-wise dynamic PH masking**.
+- Implemented exact **1D / 2D PH-based masking controllers** for S4 and S4ND.
+- Observed **near-identity collapse** in 1D flattened image settings (`τ -> τ_min`, pass ratio near 1).
+- Interpreted that collapse as being **consistent with flattening-induced spectral distortion**, rather than as a direct failure of PH logic.
+- Switched image-side experiments to **S4ND + 2D PH** and confirmed that the controller now **activates and masks nontrivially**.
+- Prepared the next-stage hypothesis test on **Speech Commands 35 (SC35)**.
 
 ## Next steps
 
-- Finish the **Pathfinder32 direct dataset pipeline** and rerun the next pilot/full-epoch settings.
-- Use Pathfinder32 to decide whether fixed PC masks are sufficient or whether to move to **learned PC optimization**.
-- If the higher-frequency hypothesis keeps holding, explore **GNN-based PC optimization** instead of a fixed dataset-level mask.
-- Revisit **SC35** and other longer-sequence settings after narrowing the keep-budget search.
+- Run the next **SC35** comparison:
+  - **Pure S4 baseline**
+  - **1D S4 + dynamic PH masking**
+- Measure not only accuracy, but also:
+  - `τ` trajectory,
+  - actual pass ratio,
+  - and the variance/collapse behavior of the controller.
+- Continue Pathfinder32 with the 2D pipeline to determine whether the new controller activation translates into stable accuracy gains.
+- Revisit whether **global PC masks** remain useful as cheap baselines, or whether the main line should move fully to **dynamic PH masking**.
 
 ## Repro (minimal notes)
 
 - Track definitions:
   - `filter_both`: `F(u+δ)`
   - `filter_then_pert`: `F(u)+δ`
+- Image-side PH experiments are now split into:
+  - **flattened 1D sequence experiments** for comparison with classic LRA-style settings,
+  - **2D S4ND experiments** for structure-preserving validation.
 - See scripts/flags in the repo for dataset and model configs.
 
 ## Status
