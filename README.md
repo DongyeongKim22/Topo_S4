@@ -1,6 +1,6 @@
 # Topo_S4 (WIP)
 
-**Frequency-localized sensitivity** in state space models (**S4 / S4D / S4ND**) and simple-to-adaptive spectral mitigations, from early **PC-band / PC-weight** preprocessing to the current **dynamic PH-masking** line.
+**Frequency-localized sensitivity** in state space models (**S4 / S4D / S4ND**) and a now-stabilized final method line: **PH-guided inverse-tan spectral normalization** (`ph_norm` / `ph_inv_tan`).
 
 - **Project homepage:** https://dongyeongkim22.github.io/Topo_S4/
 - **Overleaf draft:** https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec
@@ -15,115 +15,94 @@ $$
 \frac{d\omega}{d\Omega}=\frac{1}{\Delta}\sec^2(\Omega/2)
 $$
 
-so sensitivity can grow rapidly as `Ω` approaches `π`. If inputs contain strong near-Nyquist components, training and evaluation may exhibit sharper degradation.
+so sensitivity can grow rapidly as `Ω` approaches `π`. The current question is not only whether high-frequency vulnerability exists, but whether a **sample-wise controller** can decide when attenuation is helpful and when it should simply back off to identity.
 
-The current question is no longer only **whether** high-frequency vulnerability exists, but also **how to localize and control it** without collapsing useful structure.
+## Current direction: PH-guided inverse-tan normalization
 
-## Current direction: Dynamic PH masking
+The repository started with **dataset-level PC masks** and later moved through **dynamic PH masking**.  
+The current active line fixes the method to a simpler and mathematically cleaner final form:
 
-The repository started with **dataset-level PC masks**:
-- **PC-band**: phase-coherent hard bandlimiting
-- **PC-weight**: phase-coherent soft weighting
-
-The current active direction is **sample-wise dynamic PH masking**:
 - compute **exact PH descriptors** on each sample's spectrum,
-- predict masking parameters (e.g., `τ`, `α`) with a lightweight controller,
-- and apply a **sample-specific spectral mask** before the unchanged S4/S4ND backbone.
+- predict a nonnegative normalization strength `λ` with a lightweight controller,
+- apply the inverse-tan normalizer
+  $$
+  W_{\lambda}(\Omega)=\beta + \frac{1-\beta}{1+\lambda\tan^2(\Omega/2)},
+  $$
+- and feed the result to the otherwise unchanged **S4 / S4D** backbone.
 
-This shift was motivated by a limitation of global PC masks: a dataset-wide prior can suppress weak-but-useful high-frequency structure by averaging it away.
+Why this form?
 
-## What this repo contains
+- **Exact identity fallback:** if `λ = 0`, then `W = 1` everywhere.
+- **Targeted high-frequency control:** larger `λ` suppresses near-Nyquist components more strongly.
+- **Cleaner implementation-to-theory match:** exact PH features + a one-parameter inverse-tan controller align the code path more closely with the intended mathematical guarantee.
+- **Cleaner story:** the method is now best viewed as **adaptive stabilization**, not as a filter that must always improve clean accuracy.
 
-- **Single-mode Fourier injection benchmark**: sweep normalized frequency `ρ in [0, 1]` (`ρ=1` is Nyquist) and measure accuracy drop vs. frequency.
-- **Filtering baselines**: guard band and low-pass filtering.
-- **Two-track evaluation protocol** to disentangle “removing the perturbation” vs. “changing sensitivity”:
-  - `filter_both`: evaluate `F(u + δ)`
-  - `filter_then_pert`: evaluate `F(u) + δ`
-- **PC-band / PC-weight** preprocessing: dataset-level spectral masks estimated once and cached.
-- **Dynamic PH masking (current)**:
-  - **1D S4 / S4D + 1D PH** for native 1D sequence settings,
-  - **2D S4ND + 2D PH** for image settings where preserving spatial structure is important.
-- **preproc_scope ablation** (`train` / `test` / `both`) to study distribution shift and scope-dependent generalization.
+## Current evidence (this week's snapshot)
 
-## Recent findings (current snapshot)
+### 1) Pathfinder32: the controller safely backs off
 
-### 1) From global PC to sample-wise PH
+In the current Pathfinder32 run, the controller starts in a filtering regime but quickly collapses toward identity:
 
-I implemented an exact **sample-wise PH-based dynamic masking module** that replaces the earlier dataset-level PC prior.
+- `λ` drops from about `3.9` at epoch 0 to effectively `0` by roughly epoch 20,
+- the actual pass ratio rises from about `0.34` to `~1.0`,
+- and the run still reaches **>95% test accuracy** while training is ongoing.
 
-- For each sample, compute a spectral representation.
-- Extract exact PH features (currently H0 superlevel persistence in 1D/2D settings).
-- Use a small controller to predict masking parameters.
-- Apply the mask before the unchanged S4/S4ND backbone.
+This is a useful result. It means the controller can **decline to intervene** when strong filtering is not beneficial, rather than forcing a harmful mask.
 
-The target complexity remains near **`O(N log N)`**, where `N` is the number of candidate spectral cells/bins processed by the PH sweep.
+### 2) SC35: native 1D audio keeps the controller active
 
-### 2) 1D flattened-image experiments: controller collapse to near-identity
+On **SC35**, the controller behaves very differently. In the current run (16 kHz train/dev, 8 kHz zero-shot evaluation test), it stays active throughout training:
 
-Initial experiments on **sequential CIFAR-10 / flattened Pathfinder32** with **1D S4 + 1D PH masking** did **not** show a consistent clean-accuracy gain.
-Depending on the dataset and setting, the result was either marginally positive or slightly negative.
+- final `λ(train/dev/test) ≈ 1.58 / 1.49 / 3.21`
+- final `actual(train/dev/test) ≈ 0.54 / 0.55 / 0.41`
 
-The more important observation was mechanistic:
-- the masking threshold `τ` converged toward its lower bound,
-- the actual spectrum pass ratio stayed close to 1,
-- and the controller behaved like a **near-identity fail-safe**.
+So the controller is strongest on the shifted test condition. This is the clearest current evidence that the normalization line is **task-adaptive** and not just collapsing everywhere.
 
-A working interpretation is that **flattening a 2D image into a 1D sequence introduces flattening-induced spectral distortion**. In that setting, aggressive 1D spectral masking can damage real spatial structure (e.g., edges/shapes), so optimization prefers to keep the mask close to identity.
+### 3) Accuracy reading: mechanism validated, calibration still open
 
-### 3) 2D validation with S4ND + 2D PH
+The current **mechanistic story is strong**, but the final robustness numbers are not yet where they need to be.
 
-To test whether the earlier collapse came from the PH mechanism itself or from the **2D → 1D mismatch**, I moved the image-side experiments to **S4ND + 2D PH masking**.
+- **SC35 + `ph_inv_tan`**: best dev `96.06%` with linked 8 kHz test `85.63%`
+- **SC35 raw baseline**: best dev `96.14%` with linked 8 kHz test `92.51%`
 
-On Pathfinder32, the controller now behaves very differently:
-- `τ` rises actively over training instead of collapsing to the minimum,
-- the actual spectrum pass ratio decreases substantially,
-- and the mask starts filtering rather than staying near identity.
-
-This does **not** yet establish a strong final performance claim. Current Pathfinder32 numbers are still preliminary (roughly `50% -> 53%`), but the controller dynamics are much more informative: the masking module is now **actually engaging**.
-
-![Dynamic PH masking trajectories](assets/ph_masking_trajectory.png)
-
-**Interpretation:** the 2D result is more consistent with the intended mechanism. It suggests that the earlier 1D collapse is better explained by the **dimensional mismatch of flattening** than by a failure of PH itself.
-
-### 4) Why this matters for the next benchmark
-
-These results suggest a simple split:
-- **native 1D signals** should be studied with **1D S4/S4D + 1D PH**,
-- **native 2D images** should be studied with **S4ND + 2D PH** when the goal is to preserve the original spatial topology.
-
-That makes **SC35** the next decisive benchmark.
+So the method is now behaving as intended, but the current SC35 calibration still trails the raw baseline on zero-shot 8 kHz accuracy.
 
 ## This week's progress update
 
-- Reframed the project from **global, dataset-level PC masking** toward **sample-wise dynamic PH masking**.
-- Implemented exact **1D / 2D PH-based masking controllers** for S4 and S4ND.
-- Observed **near-identity collapse** in 1D flattened image settings (`τ -> τ_min`, pass ratio near 1).
-- Interpreted that collapse as being **consistent with flattening-induced spectral distortion**, rather than as a direct failure of PH logic.
-- Switched image-side experiments to **S4ND + 2D PH** and confirmed that the controller now **activates and masks nontrivially**.
-- Prepared the next-stage hypothesis test on **Speech Commands 35 (SC35)**.
+**300-char summary**
+
+> This week I finalized the PH-guided inverse-tan code path for a mathematically cleaner controller: exact PH features, exact identity fallback at λ=0, and task-adaptive normalization. Pathfinder32 already exceeds 95% while backing off to identity; SC35 keeps the controller active under 8k evaluation.
+
+### What changed
+
+- Fixed the project's **main method** to `ph_norm` / `ph_inv_tan`.
+- Strengthened the **implementation-to-theory match** with exact PH extraction and a one-parameter inverse-tan controller that has an explicit identity guarantee.
+- Reframed the contribution as **adaptive stabilization** rather than universal clean-accuracy gain.
+- Confirmed two clearly different controller regimes:
+  - **Pathfinder32:** identity fallback
+  - **SC35:** persistent nontrivial normalization
+- Moved the project closer to a final paper story: **the theory/method are mostly fixed; what remains is empirical consolidation**.
+
+## What this repo contains
+
+- **Frequency sensitivity probes** and simple filtering baselines from earlier stages.
+- **Archived dataset-level PC masks** (`PC-band`, `PC-weight`) from the initial global-prior direction.
+- **Earlier dynamic PH masking** experiments, kept as historical stepping stones.
+- **Current main line: PH-guided inverse-tan normalization**
+  - native **1D S4 / S4D + 1D PH**
+  - controller statistics such as `λ` and actual pass ratio
+  - robustness-oriented evaluation on shifted conditions
 
 ## Next steps
 
-- Run the next **SC35** comparison:
-  - **Pure S4 baseline**
-  - **1D S4 + dynamic PH masking**
-- Measure not only accuracy, but also:
-  - `τ` trajectory,
-  - actual pass ratio,
-  - and the variance/collapse behavior of the controller.
-- Continue Pathfinder32 with the 2D pipeline to determine whether the new controller activation translates into stable accuracy gains.
-- Revisit whether **global PC masks** remain useful as cheap baselines, or whether the main line should move fully to **dynamic PH masking**.
+The remaining work is mainly empirical, not theoretical:
 
-## Repro (minimal notes)
-
-- Track definitions:
-  - `filter_both`: `F(u+δ)`
-  - `filter_then_pert`: `F(u)+δ`
-- Image-side PH experiments are now split into:
-  - **flattened 1D sequence experiments** for comparison with classic LRA-style settings,
-  - **2D S4ND experiments** for structure-preserving validation.
-- See scripts/flags in the repo for dataset and model configs.
+- finish the ongoing **Pathfinder32 200-epoch** run cleanly,
+- add final **multi-seed** summaries,
+- include **gradient-volatility** logs (norm mean/std/CV, max spikes, clipping rate),
+- report **SC35** with both matched-rate and shifted-rate evaluation,
+- tune the SC35 controller without changing the core method.
 
 ## Status
 
-Work in progress.
+The project is still a work in progress, but the **core theory/method now looks fixed enough** to move toward final experiments and paper writing. The main remaining question is not what the method is, but how strongly and under which evaluation protocol it should be calibrated.
