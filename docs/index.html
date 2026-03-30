@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta
       name="description"
-      content="Topo_S4 project homepage: PH-guided inverse-tan spectral normalization for S4/S4D, frequency-localized sensitivity, and adaptive spectral stabilization."
+      content="Topo_S4 project homepage: PH-guided inverse-tan spectral normalization for S4/S4D, frequency-localized sensitivity, adaptive spectral stabilization, and controller ablations."
     />
     <title>Topo_S4</title>
 
@@ -116,9 +116,9 @@
           <span class="badge">S4 / S4D</span>
           <span class="badge">Persistent Homology</span>
           <span class="badge">Inverse-tan normalization</span>
-          <span class="badge">Spectral robustness</span>
-          <span class="badge">CIFAR10-C</span>
-          <span class="badge">SC35</span>
+          <span class="badge">CIFAR-10-C / CIFAR-100-C</span>
+          <span class="badge">PH-Linear</span>
+          <span class="badge">Pathfinder (next)</span>
         </div>
       </section>
 
@@ -135,31 +135,31 @@
         <h2>What changed this week</h2>
         <div class="grid">
           <div class="mini">
-            <div class="badge completed">Method baseline</div>
+            <div class="badge completed">Baseline update</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Stabilized the new <strong>inverse-tan normalization</strong> line with a
-              <strong>single learned global <code>λ</code></strong> shared across all samples.
+              Re-centered the write-up around <strong>E1</strong> as the current
+              <strong>strong clean + robustness baseline</strong> on RGB CIFAR.
             </p>
           </div>
           <div class="mini">
-            <div class="badge completed">Robustness eval</div>
+            <div class="badge completed">E4 interpretation</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Using the best global-<code>λ</code> CIFAR checkpoint, evaluated
-              <strong>CIFAR-10-C</strong> and observed a clear robustness gain over the raw baseline.
+              Added the initial full <strong>E4 PH-linear</strong> CIFAR-10 RGB run:
+              promising sample-wise control, but <strong>not yet above E1</strong> overall.
             </p>
           </div>
           <div class="mini">
-            <div class="badge completed">Ablation</div>
+            <div class="badge completed">Implementation note</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              Ran <strong>E0-E7 controller ablations</strong> to test whether sample-wise control is needed,
-              whether PH features help, and whether a linear or nonlinear controller is better.
+              Clarified that current CIFAR RGB runs use a
+              <strong>single inverse-tan profile shared across channels</strong>.
             </p>
           </div>
           <div class="mini">
-            <div class="badge">Current takeaway</div>
+            <div class="badge">Next step</div>
             <p style="margin-top: 10px; margin-bottom: 0;">
-              The most promising controller is currently <strong>PH-Linear Δλ</strong>, which gave the
-              strongest held-out test trend across the screening runs.
+              Next: <strong>per-channel RGB inverse-tan</strong> reruns, then
+              <strong>E0 / E1 / E4</strong> three-seed runs on Pathfinder and other benchmarks.
             </p>
           </div>
         </div>
@@ -169,13 +169,13 @@
         <h2>Progress detail (≤ 280 words)</h2>
         <div class="wordbox">
           <p>
-            This week I first stabilized the new inverse-tan normalization line by introducing a simpler baseline: one learned global <code>λ</code> shared across all samples. This let me test whether the normalization itself is useful before adding any sample-wise controller. On clean data, the global-<code>λ</code> version gave small but consistent gains on CIFAR10-gray and SC35. Using the best CIFAR checkpoint, I then ran CIFAR-10-C evaluation and saw a clearer robustness signal, with higher mean corruption accuracy and larger gains at stronger severities.
+            This week I consolidated the inverse-tan normalization results on RGB CIFAR and re-centered the story around a stronger baseline. The key finding is that the shared global-<code>λ</code> model (E1) is already a strong clean+robustness baseline: on CIFAR-10 RGB it improves <code>test@best-dev</code> over raw E0 and gives a clear CIFAR-10-C gain, and on CIFAR-100 RGB it also improves both clean accuracy and CIFAR-100-C mean accuracy. This shows that the inverse-tan line itself is useful before any sample-wise controller is added.
           </p>
           <p>
-            These results motivated the E0-E7 ablation series. The goal was to answer three questions in order: (1) is sample-wise control actually needed beyond a single global <code>λ</code>? (2) if so, does persistent homology provide useful structure for choosing <code>λ</code>? and (3) is a simple controller enough, or do we need a more flexible MLP? To test this, I compared raw input (E0), global learned <code>λ</code> (E1), PH-rule controllers using top lifetimes only and lifetimes plus peak frequency (E2-E3), PH-linear and PH-tiny-MLP <code>Δλ</code> heads (E4-E5), a spectrum-MLP control without PH (E6), and a shuffled-PH sanity check (E7).
+            I also analyzed an initial full CIFAR-10 RGB run of the PH-linear sample-wise controller (E4). E4 reached the highest <code>best-dev</code> accuracy among E0/E1/E4, confirming that PH-guided sample-wise control is viable, but its <code>test@best-dev</code> and CIFAR-10-C mean accuracy are still below the current E1 baseline. The main issue appears to be optimization: early in training, E4 stays close to the identity regime for many epochs before moving into a more moderate <code>λ</code> range.
           </p>
           <p style="margin-bottom: 0;">
-            The current picture is that inverse-tan normalization is useful, sample-wise control is worth pursuing, and the strongest present candidate is the low-capacity <strong>PH-Linear</strong> controller. Lifetime-only rules were too weak, adding peak location helped, and the larger nonlinear PH head did not yet beat the simpler linear readout.
+            So the current conclusion is not that E4 already wins, but that E4 remains the most promising sample-wise direction while E1 is the present strong baseline. I also clarified that the current CIFAR-10 RGB implementation applies one inverse-tan profile shared across RGB channels. Next I will rerun RGB CIFAR with per-channel inverse-tan coefficients, and next week I plan to run E0, E1, and E4 on Pathfinder and additional benchmarks with three seeds.
           </p>
         </div>
       </section>
@@ -192,36 +192,41 @@
           </thead>
           <tbody>
             <tr>
-              <td>Global learned <code>λ</code></td>
-              <td>Small clean gains on CIFAR10-gray and SC35; stronger CIFAR-10-C robustness gains</td>
-              <td>Inverse-tan normalization itself is useful and stable enough to serve as a baseline.</td>
+              <td>RGB CIFAR baseline</td>
+              <td>E1 is currently the strongest verified baseline on the available single-seed runs, improving clean accuracy and corruption robustness over E0.</td>
+              <td>The inverse-tan normalization line itself is useful even before sample-wise control.</td>
             </tr>
             <tr>
-              <td>E0-E7 screening</td>
-              <td><code>PH-Linear Δλ</code> gave the best held-out test trend across the screening runs</td>
-              <td>PH contains useful controller signal, but a simple low-capacity head currently works best.</td>
+              <td>Initial E4 full run</td>
+              <td>E4 reaches the highest best-dev accuracy on CIFAR-10 RGB, but still trails E1 on test@best-dev and CIFAR-10-C mean accuracy.</td>
+              <td>PH-linear sample-wise control is viable and promising, but its current operating point is not yet the best one.</td>
             </tr>
             <tr>
-              <td>PH-rule vs. PH-MLP</td>
-              <td>Lifetime-only was weak; lifetime + frequency helped; tiny MLP did not clearly improve over linear</td>
-              <td>Peak location matters, but nonlinear capacity is not yet the bottleneck.</td>
+              <td>Optimization readout</td>
+              <td>Early E4 training stays near identity for many epochs, then shifts into a moderate-λ regime later in training.</td>
+              <td>The main gap looks more like an optimization issue than a failure of the PH-linear idea itself.</td>
+            </tr>
+            <tr>
+              <td>Implementation note</td>
+              <td>Current RGB preprocessing shares one inverse-tan spectral profile across all three channels.</td>
+              <td>This leaves a clear next experiment: per-channel inverse-tan coefficients.</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout muted">
           <strong>Interpretation.</strong>
-          This week’s progress was mainly about narrowing the controller design space. The project now has a stable global-<code>λ</code> baseline, a robustness signal on CIFAR-10-C, and a clear leading sample-wise controller candidate in <code>PH-Linear</code>.
+          This week’s progress mainly sharpened the paper story: E1 is the present strong baseline, E4 remains the leading sample-wise candidate, and the next gains are most likely to come from better E4 optimization and per-channel RGB control.
         </div>
       </section>
 
       <section class="card">
         <h2>Current direction</h2>
         <ul>
-          <li>Use <strong>PH-guided inverse-tan normalization</strong> as the fixed main method family.</li>
-          <li>Treat <strong>global learned <code>λ</code></strong> as the stable baseline.</li>
-          <li>Use <strong>PH-Linear Δλ</strong> as the current main sample-wise controller candidate.</li>
-          <li>Confirm the ranking with multi-seed runs and stronger sanity checks.</li>
+          <li>Treat <strong>E1 (global learned <code>λ</code>)</strong> as the current strong baseline.</li>
+          <li>Keep <strong>E4 (PH-linear <code>Δλ</code>)</strong> as the main sample-wise controller candidate.</li>
+          <li>Rerun RGB CIFAR with <strong>per-channel inverse-tan coefficients</strong>.</li>
+          <li>Run <strong>E0 / E1 / E4</strong> on Pathfinder and other benchmarks with <strong>three seeds</strong>.</li>
         </ul>
       </section>
 
@@ -232,12 +237,12 @@
           <p class="muted" style="margin-top: 10px;">
             Earlier experiments focused on dataset-level phase-coherence masks and dynamic PH masking.
             These remain useful as historical baselines, but the current active direction is the cleaner
-            PH-guided inverse-tan normalization path.
+            PH-guided inverse-tan normalization path with global-<code>λ</code> and PH-linear sample-wise control.
           </p>
         </details>
       </section>
 
-      <p class="muted">Last updated: 2026-03-22.</p>
+      <p class="muted">Last updated: 2026-03-29.</p>
     </main>
 
     <script>
