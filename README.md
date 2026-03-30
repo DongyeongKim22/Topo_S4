@@ -1,118 +1,44 @@
-# Topo_S4 (WIP)
+# E4 initial-setting addendum
 
-**Frequency-localized sensitivity** in state space models (**S4 / S4D / S4ND**) and a now-narrowed main method family: **PH-guided inverse-tan spectral normalization** (`ph_norm` / `ph_inv_tan`).
+## CIFAR-10 RGB clean + CIFAR-C summary
 
-- **Project homepage:** https://dongyeongkim22.github.io/Topo_S4/
-- **Overleaf draft:** https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec
-- **Repo:** https://github.com/DongyeongKim22/Topo_S4
+| Exp | Best dev | Epoch | Test@best-dev | Best test | Final test | CIFAR-C mean | Severity-5 mean |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| E0 | 91.32 | 175 | 90.86 | 91.42 | 91.41 | 74.36 | 60.30 |
+| E1 | 91.42 | 195 | 91.38 | 91.43 | 91.36 | 77.15 | 64.29 |
+| E4 | 91.66 | 191 | 91.30 | 91.40 | 91.36 | 75.57 | 61.63 |
 
-## Motivation
+## Main interpretation
 
-A working hypothesis is that **near-Nyquist digital frequencies** (`Ω -> π`) can become numerically over-sensitive under bilinear/Tustin discretization due to frequency warping:
+- The initial full-length **E4** run is **clearly better than E0**, but it **does not yet beat E1** on the main held-out criteria.
+- Relative to E0, E4 improves **test@best-dev** by **0.44pt** and **CIFAR-C mean** by **1.21pt**.
+- Relative to E1, E4 is **-0.08pt** lower on **test@best-dev** and **-1.58pt** lower on **CIFAR-C mean**.
+- E4 has the **highest best-dev accuracy** among the three (**91.66%**), but its **test@best-dev** is only **91.30%**, so the default setting is not yet the strongest main-line model.
 
-$$
-\omega(\Omega)=\frac{2}{\Delta}\tan(\Omega/2), \qquad
-\frac{d\omega}{d\Omega}=\frac{1}{\Delta}\sec^2(\Omega/2)
-$$
+## Robustness detail
 
-so sensitivity can grow rapidly as `Ω` approaches `π`. The current question is not only whether high-frequency vulnerability exists, but whether a **sample-wise controller** can decide when attenuation is helpful and when it should simply back off.
+- Severity-wise, E4 stays between E0 and E1 at every CIFAR-C severity.
 
-## Current direction: PH-guided inverse-tan normalization
+| Severity | E0 | E1 | E4 | E4-E0 | E4-E1 |
+|---|---:|---:|---:|---:|---:|
+| 1 | 85.03 | 86.59 | 85.96 | 0.93 | -0.62 |
+| 2 | 80.91 | 83.15 | 82.16 | 1.24 | -0.99 |
+| 3 | 75.91 | 78.80 | 77.31 | 1.41 | -1.49 |
+| 4 | 69.65 | 72.91 | 70.79 | 1.14 | -2.12 |
+| 5 | 60.30 | 64.29 | 61.63 | 1.32 | -2.66 |
 
-The repository started with **dataset-level PC masks** and later moved through **dynamic PH masking**. The current line fixes the frequency intervention to a simpler and cleaner final form:
+- E4 improves most over E0 on **gaussian_noise, shot_noise, pixelate, zoom_blur, and frost**.
+- E4 still trails E1 most on **gaussian_noise, glass_blur, and shot_noise**.
 
-- compute **exact PH descriptors** on each sample's spectrum,
-- predict a nonnegative normalization strength `λ` (currently through either a global scalar or a lightweight PH-conditioned controller),
-- apply the inverse-tan normalizer
-  $$
-  W_{\lambda}(\Omega)=\beta + \frac{1-\beta}{1+\lambda\tan^2(\Omega/2)},
-  $$
-- and feed the result to the otherwise unchanged **S4 / S4D** backbone.
+## Controller dynamics from the initial E4 run
 
-Why this form?
+- For the first **31 epochs (epochs 1-31)**, the dev-side effective lambda stayed below **0.05**, so the controller behaved very close to the identity path.
+- After that transition, E4 moved to a moderate operating regime; over the last 20 epochs the dev-side effective lambda averaged **0.316** and the actual pass ratio averaged **0.695**.
+- Late in training, the train-side sample-wise variation also became very small (last-20 mean train lambda-batch std **0.0060**, delta-lambda-batch std **0.0058**), so the initial E4 run behaves more like a lightly adaptive near-global controller than a strongly varying per-sample controller.
+- Optimization is not fully smooth yet: the maximum recorded total gradient norm reached **85.90** during early training, much higher than E0 (**9.52**) or E1 (**10.66**).
 
-- **Exact identity fallback:** if `λ = 0`, then `W = 1` everywhere.
-- **Targeted high-frequency control:** larger `λ` suppresses near-Nyquist components more strongly.
-- **Cleaner implementation-to-theory match:** exact PH features + a one-parameter inverse-tan controller align the code path more closely with the intended mathematical guarantee.
-- **Cleaner story:** the method is best viewed as **adaptive stabilization**, not as a filter that must always improve clean accuracy.
+## Why this matters for the write-up
 
-## This week's empirical snapshot
-
-### 1) Global `λ` is a useful intermediate baseline
-
-This week I first trained a **shared global `λ`** version of the inverse-tan normalizer. Even without sample-wise conditioning, it already produced small clean-set gains:
-
-- **SC35:** best dev `96.57 -> 96.73`, test@bestdev `95.91 -> 96.27`
-- **CIFAR10-gray:** best dev `88.50 -> 88.74`, test@bestdev `87.70 -> 88.31`
-
-This is useful because it shows that the inverse-tan pathway can help without immediately relying on a complex controller.
-
-### 2) CIFAR-10-C shows the clearest robustness gain
-
-Using the best global-`λ` CIFAR10-gray checkpoint, I evaluated **CIFAR-10-C** and compared it to the raw baseline checkpoint:
-
-- mean corruption accuracy improved from **67.21** to **69.11** (`+1.90`)
-- **68 / 75** corruption-severity conditions improved
-- gains increased with severity: `+1.23`, `+1.54`, `+1.80`, `+2.09`, `+2.86` from severity 1 to 5
-- the strongest average gains appeared on **noise** corruptions (`+4.42`) and remained positive on blur, weather, and digital corruptions
-
-So the global-`λ` line is not only stable; it is already a meaningful robustness baseline.
-
-### 3) E0-E7 screening narrowed the sample-wise controller family
-
-I then ran a **short single-seed E0-E7 screening** to test how sample-wise `λ` should be controlled:
-
-- **E0:** Raw / no preprocessing
-- **E1:** Global learned `λ`
-- **E2:** PH-rule using top lifetimes only
-- **E3:** PH-rule using top lifetimes + peak frequency
-- **E4:** PH-linear `Δλ`
-- **E5:** PH-tiny-MLP `Δλ`
-- **E6:** Spectrum-MLP `Δλ`
-- **E7:** Shuffled-PH sanity
-
-On **lra_image** (flattened image-sequence screening), the best held-out test result was **E4 = 82.22**, slightly above **E6 = 82.13** and raw **E0 = 81.53**. On **SC35** screening, **E4 = 10.67** also led **E3 = 10.27** and **E1 = 10.12** on the current held-out test metric.
-
-The pattern is informative:
-
-- **E2** is weak, so **lifetime alone is not enough**
-- **E3** recovers much of the gap, so **peak location matters**
-- **E4** is currently the **best overall candidate**
-- **E5** does not outperform the simpler heads yet
-- **E7** causes only a modest drop, so the nonlinear controller still does not appear to exploit PH strongly enough
-
-## Current interpretation
-
-The main progress this week is not a final SOTA claim. It is that the controller design space has become much clearer:
-
-- the inverse-tan normalization path is stable,
-- a shared global `λ` already helps clean performance and corruption robustness,
-- sample-wise control is worth pursuing,
-- and the current best controller is a **low-capacity PH-linear readout** rather than a larger MLP.
-
-That is a good outcome for the paper story because it keeps the method **interpretable, lightweight, and closer to the original PH-guided motivation**.
-
-## What this repo contains
-
-- **Frequency sensitivity probes** and simple filtering baselines from earlier stages.
-- **Archived dataset-level PC masks** (`PC-band`, `PC-weight`) from the initial global-prior direction.
-- **Earlier dynamic PH masking** experiments, kept as historical stepping stones.
-- **Current main line: PH-guided inverse-tan normalization**
-  - global-`λ` baseline
-  - PH-rule / PH-linear / PH-MLP sample-wise controllers
-  - controller statistics such as `λ` and actual pass ratio
-  - robustness-oriented evaluation on shifted and corrupted conditions
-
-## Next steps
-
-The remaining work is now mostly empirical:
-
-- promote **PH-linear (`E4`)** to the main sample-wise controller line,
-- run **multi-seed** comparisons for `E1`, `E4`, and `E6`,
-- add stronger **PH-dependence checks** (including shuffled-feature sanity beyond the current quick screen),
-- extend corruption-style evaluation beyond the current CIFAR-10-C study,
-- and keep logging controller behavior (`λ`, pass ratio, gradient statistics) alongside accuracy.
-
-## Status
-
-The project is still a work in progress, but the method family is now much narrower than before. The key remaining question is no longer *what the controller should roughly look like*; it is whether the **PH-linear sample-wise controller** remains strongest under longer training, multi-seed evaluation, and broader robustness tests.
+- The current write-up should **not** say that E4 has already replaced E1.
+- A better phrasing is: **E4 remains the most promising sample-wise direction, and the initial full-length RGB run confirms that it is viable and improves over E0, but it has not yet surpassed the strong E1 baseline.**
+- This also fits the partial tuning sweep: the current full-length run uses the default **top-5 / gamma=1.0 / l2** setting, while the short incomplete sweep suggests there is room to improve the E4 operating point further.
