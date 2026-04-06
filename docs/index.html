@@ -2,333 +2,882 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#111827" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Topo_S4 project homepage: PH-guided inverse-tan spectral normalization for S4/S4D, frequency-localized sensitivity, global-lambda baselines, PH-linear sample-wise control, and robustness evaluation."
+      content="Topo_S4 research project on frequency-localized stabilization for S4/S4D/S4ND using persistent homology, inverse-tan spectral normalization, and PH-peak residual boosting."
     />
-    <title>Topo_S4</title>
-
+    <meta name="theme-color" content="#0f172a" />
+    <title>Topo_S4 — Research Project</title>
     <link rel="manifest" href="./manifest.webmanifest" />
-
     <style>
-      :root { color-scheme: light dark; }
+      :root {
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface-2: #eef3fb;
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #d7e0ef;
+        --accent: #1d4ed8;
+        --accent-2: #0f766e;
+        --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        --radius: 20px;
+        --radius-sm: 14px;
+        --content: 1180px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        line-height: 1.6;
+        background:
+          radial-gradient(circle at top left, rgba(29, 78, 216, 0.08), transparent 28%),
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 24%),
+          var(--bg);
+        color: var(--ink);
+        font: 16px/1.7 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .wrap {
+        width: min(calc(100% - 32px), var(--content));
+        margin: 0 auto;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(14px);
+        background: rgba(245, 247, 251, 0.84);
+        border-bottom: 1px solid rgba(215, 224, 239, 0.8);
+      }
+
+      .site-header .wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 14px 0;
+      }
+
+      .brand {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        font-size: 1.1rem;
+      }
+
+      .brand span {
+        color: var(--accent);
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 0.96rem;
+      }
+
+      .nav a {
+        padding: 6px 0;
+        transition: color 0.2s ease;
+      }
+
+      .nav a:hover {
+        color: var(--ink);
+      }
+
       main {
-        max-width: 1040px;
-        margin: 40px auto;
-        padding: 0 16px 36px;
+        padding: 36px 0 56px;
       }
-      h1 { margin-bottom: 8px; }
-      h2 { margin-top: 0; }
-      h3 { margin-bottom: 8px; }
-      p { margin-top: 0; }
-      .muted { opacity: 0.78; }
-      .card {
-        border: 1px solid rgba(127, 127, 127, 0.25);
-        border-radius: 14px;
-        padding: 18px;
-        margin: 16px 0;
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.5fr 0.95fr;
+        gap: 24px;
+        align-items: stretch;
       }
-      .hero { padding: 6px 0 4px; }
+
+      .hero-copy,
+      .hero-panel,
+      .panel {
+        background: var(--surface);
+        border: 1px solid rgba(215, 224, 239, 0.95);
+        box-shadow: var(--shadow);
+        border-radius: var(--radius);
+      }
+
+      .hero-copy {
+        padding: 34px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent-2);
+        box-shadow: 0 0 0 6px rgba(15, 118, 110, 0.12);
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        font-size: clamp(2rem, 3.7vw, 3.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 64ch;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
       .badges {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin: 12px 0 0;
+        gap: 10px;
+        margin-top: 22px;
       }
+
       .badge {
-        display: inline-block;
-        padding: 4px 10px;
+        border: 1px solid rgba(29, 78, 216, 0.16);
+        background: rgba(29, 78, 216, 0.06);
+        color: #1e3a8a;
         border-radius: 999px;
-        border: 1px solid rgba(127, 127, 127, 0.28);
-        font-size: 0.9rem;
+        padding: 7px 12px;
+        font-size: 0.92rem;
+        font-weight: 600;
       }
-      .completed { font-weight: 600; }
+
+      .hero-panel {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .hero-panel h2 {
+        margin: 0 0 18px;
+        font-size: 1.15rem;
+      }
+
+      .status-list {
+        display: grid;
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .status-list li {
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+      }
+
+      .status-list span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 4px;
+      }
+
+      .status-list strong {
+        font-size: 1rem;
+      }
+
+      .section-stack {
+        display: grid;
+        gap: 22px;
+        margin-top: 22px;
+      }
+
+      .panel {
+        padding: 28px;
+      }
+
+      .panel h2 {
+        margin: 0 0 14px;
+        font-size: 1.55rem;
+        letter-spacing: -0.03em;
+      }
+
+      .panel h3 {
+        margin: 0 0 10px;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 12px;
+        gap: 16px;
       }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .mini {
-        border: 1px solid rgba(127, 127, 127, 0.22);
-        border-radius: 12px;
-        padding: 12px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border-radius: var(--radius-sm);
+        padding: 18px;
       }
+
+      .mini p:last-child,
+      .panel p:last-child {
+        margin-bottom: 0;
+      }
+
+      .equation {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.95rem;
+        overflow-x: auto;
+      }
+
+      .callout {
+        padding: 18px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(15, 118, 110, 0.08));
+        border: 1px solid rgba(29, 78, 216, 0.12);
+      }
+
+      .wordbox {
+        padding: 20px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+        border-radius: var(--radius-sm);
+      }
+
+      .wordbox p {
+        margin: 0;
+      }
+
+      .subpanel + .subpanel {
+        margin-top: 22px;
+      }
+
+      .subhead {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: end;
+        margin-bottom: 12px;
+      }
+
+      .subhead p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 70ch;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 8px;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: #fff;
       }
+
+      thead {
+        background: #eff5ff;
+      }
+
       th, td {
-        border-bottom: 1px solid rgba(127, 127, 127, 0.25);
-        padding: 8px 6px;
         text-align: left;
         vertical-align: top;
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--line);
       }
-      code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      tbody tr:last-child td {
+        border-bottom: 0;
       }
-      ul { margin-top: 8px; }
-      .callout {
-        border-left: 4px solid rgba(127, 127, 127, 0.4);
-        padding-left: 12px;
-        margin: 12px 0 0;
+
+      th {
+        font-size: 0.9rem;
+        color: #1e3a8a;
+        font-weight: 700;
       }
-      details { margin-top: 12px; }
-      summary { cursor: pointer; font-weight: 600; }
-      .wordbox {
-        border: 1px dashed rgba(127, 127, 127, 0.35);
-        border-radius: 10px;
-        padding: 14px;
-        background: rgba(127, 127, 127, 0.05);
+
+      td {
+        font-size: 0.96rem;
       }
-      .equation {
-        overflow-x: auto;
-        padding: 10px 12px;
-        border-radius: 10px;
-        background: rgba(127, 127, 127, 0.05);
-        border: 1px solid rgba(127, 127, 127, 0.18);
-        margin: 10px 0 0;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      .note {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .timeline li {
+        position: relative;
+        padding: 16px 16px 16px 54px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #fff;
+      }
+
+      .timeline li::before {
+        content: "";
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.12);
+      }
+
+      .timeline strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .links-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .link-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #fff;
+      }
+
+      .link-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+      }
+
+      footer {
+        width: min(calc(100% - 32px), var(--content));
+        margin: 24px auto 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .grid.two,
+        .grid.three,
+        .links-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .subhead {
+          flex-direction: column;
+          align-items: start;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .site-header .wrap {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .hero-copy,
+        .hero-panel,
+        .panel {
+          padding: 22px;
+        }
+
+        th, td {
+          padding: 10px 9px;
+        }
+
+        .nav {
+          gap: 12px;
+          font-size: 0.92rem;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1120;
+          --surface: #0f172a;
+          --surface-2: #111c34;
+          --ink: #e5eefb;
+          --muted: #94a3b8;
+          --line: #24324a;
+          --accent: #60a5fa;
+          --accent-2: #34d399;
+          --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+        }
+
+        body {
+          background:
+            radial-gradient(circle at top left, rgba(96, 165, 250, 0.09), transparent 28%),
+            radial-gradient(circle at top right, rgba(52, 211, 153, 0.08), transparent 24%),
+            var(--bg);
+        }
+
+        .site-header {
+          background: rgba(11, 17, 32, 0.84);
+          border-bottom-color: rgba(36, 50, 74, 0.9);
+        }
+
+        .badge {
+          background: rgba(96, 165, 250, 0.12);
+          color: #bfdbfe;
+          border-color: rgba(96, 165, 250, 0.18);
+        }
+
+        thead {
+          background: #13213b;
+        }
+
+        th {
+          color: #bfdbfe;
+        }
+
+        .equation {
+          background: #08101d;
+          color: #dbeafe;
+        }
+
+        .mini,
+        .wordbox,
+        table,
+        .timeline li,
+        .link-card {
+          background: rgba(15, 23, 42, 0.92);
+        }
       }
     </style>
   </head>
-
   <body>
-    <main>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="#top">Topo_<span>S4</span></a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#overview">Overview</a>
+          <a href="#method">Method</a>
+          <a href="#weekly">Weekly update</a>
+          <a href="#results">Results</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="#links">Links</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap" id="top">
       <section class="hero">
-        <h1>Topo_S4</h1>
-        <p class="muted">
-          Work-in-progress research project on <strong>frequency-localized sensitivity</strong>,
-          <strong>PH-guided inverse-tan spectral normalization</strong>, and
-          <strong>adaptive spectral stabilization</strong> for the S4 family
-          (<strong>S4 / S4D / S4ND</strong>).
-        </p>
-        <div class="badges" aria-label="project tags">
-          <span class="badge">S4 / S4D / S4ND</span>
-          <span class="badge">Persistent Homology</span>
-          <span class="badge">Inverse-tan normalization</span>
-          <span class="badge">E0 / E1 / E4</span>
-          <span class="badge">CIFAR-10-C / CIFAR-100-C</span>
-          <span class="badge">Pathfinder next</span>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Links</h2>
-        <ul>
-          <li><a href="https://dongyeongkim22.github.io/Topo_S4/">Project page</a></li>
-          <li><a href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">Overleaf draft</a></li>
-          <li><a href="https://github.com/DongyeongKim22/Topo_S4">GitHub repo</a></li>
-        </ul>
-      </section>
-
-      <section class="card">
-        <h2>Motivation</h2>
-        <p>
-          A working hypothesis is that <strong>near-Nyquist digital frequencies</strong>
-          can become numerically over-sensitive under bilinear / Tustin discretization because of
-          frequency warping. The main question is not only whether high-frequency sensitivity exists,
-          but whether a <strong>sample-wise controller</strong> can decide when attenuation helps and
-          when it should back off toward identity.
-        </p>
-        <div class="equation">
-          ω(Ω) = (2 / Δ) tan(Ω / 2), &nbsp;&nbsp; dω/dΩ = (1 / Δ) sec²(Ω / 2)
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Current method family</h2>
-        <p>
-          The repository started with dataset-level PC masks and later moved through dynamic PH masking.
-          The current main line is now much narrower:
-          <strong>PH-guided inverse-tan spectral normalization</strong>.
-        </p>
-        <div class="equation">
-          W<sub>λ</sub>(Ω) = β + (1 - β) / (1 + λ tan²(Ω / 2))
-        </div>
-        <ul>
-          <li><strong>Identity fallback:</strong> if <code>λ = 0</code>, then <code>W = 1</code>.</li>
-          <li><strong>Targeted control:</strong> larger <code>λ</code> suppresses near-Nyquist components more strongly.</li>
-          <li><strong>Current comparison:</strong> <strong>E0</strong> raw, <strong>E1</strong> global learned <code>λ</code>, and <strong>E4</strong> PH-linear <code>Δλ</code>.</li>
-        </ul>
-      </section>
-
-      <section class="card">
-        <h2>What changed this week</h2>
-        <div class="grid">
-          <div class="mini">
-            <div class="badge completed">Story update</div>
-            <p style="margin-top: 10px; margin-bottom: 0;">
-              Re-centered the write-up around <strong>E1</strong> as the current
-              <strong>strong clean + robustness baseline</strong>.
-            </p>
-          </div>
-          <div class="mini">
-            <div class="badge completed">Completed run</div>
-            <p style="margin-top: 10px; margin-bottom: 0;">
-              Added the first completed full-length <strong>E4 PH-linear</strong>
-              CIFAR-10 RGB run.
-            </p>
-          </div>
-          <div class="mini">
-            <div class="badge completed">Interpretation</div>
-            <p style="margin-top: 10px; margin-bottom: 0;">
-              Clarified that E4 is <strong>competitive and viable</strong>, but
-              <strong>not yet above E1</strong> on the main completed criteria.
-            </p>
-          </div>
-          <div class="mini">
-            <div class="badge">Implementation note</div>
-            <p style="margin-top: 10px; margin-bottom: 0;">
-              Current RGB runs use one inverse-tan profile
-              <strong>shared across channels</strong>, not per-channel coefficients.
-            </p>
+        <div class="hero-copy">
+          <p class="eyebrow">Active research project</p>
+          <h1>Frequency-Localized Stabilization for State Space Models</h1>
+          <p class="lead">
+            Topo_S4 studies whether S4-like models become unusually sensitive near the Nyquist
+            boundary and whether persistent-homology-guided spectral control can stabilize those
+            regions without erasing useful high-frequency structure.
+          </p>
+          <div class="badges" aria-label="Project tags">
+            <span class="badge">S4 / S4D / S4ND</span>
+            <span class="badge">Persistent Homology</span>
+            <span class="badge">Inverse-tan normalization</span>
+            <span class="badge">Flattened CIFAR-10</span>
+            <span class="badge">Pathfinder</span>
+            <span class="badge">PH-peak residual boost</span>
           </div>
         </div>
+
+        <aside class="hero-panel" aria-label="Project status">
+          <div>
+            <h2>Current status</h2>
+            <ul class="status-list">
+              <li>
+                <span>Confirmed baseline</span>
+                <strong>E1 is the strongest completed clean + robustness baseline on RGB CIFAR.</strong>
+              </li>
+              <li>
+                <span>Current bottleneck</span>
+                <strong>The sample-wise controllers are behaving like saturated scalar Δλ heads.</strong>
+              </li>
+              <li>
+                <span>Next experiment</span>
+                <strong>Keep global inverse-tan stabilization, then add PH-peak residual boosting.</strong>
+              </li>
+            </ul>
+          </div>
+        </aside>
       </section>
 
-      <section class="card">
-        <h2> Progress </h2>
-        <div class="wordbox">
-          <p>
-            This week I consolidated the inverse-tan normalization results on RGB CIFAR and re-centered the story around a stronger baseline. The key finding is that the shared global-<code>λ</code> model (E1) is already a strong clean+robustness baseline: on CIFAR-10 RGB it improves <code>test@best-dev</code> over raw E0 and gives a clear CIFAR-10-C gain, and on CIFAR-100 RGB it also improves both clean accuracy and CIFAR-100-C mean accuracy. This shows that the inverse-tan line itself is useful before any sample-wise controller is added.
+      <div class="section-stack">
+        <section class="panel" id="overview">
+          <h2>Research question</h2>
+          <p class="muted">
+            The central question is not just whether high-frequency sensitivity exists in S4-like
+            models, but whether a topology-aware controller can decide when attenuation helps and
+            when it should back off toward identity.
           </p>
-          <p>
-            I also analyzed an initial full CIFAR-10 RGB run of the PH-linear sample-wise controller (E4). E4 reached the highest <code>best-dev</code> accuracy among E0/E1/E4, confirming that PH-guided sample-wise control is viable, but its <code>test@best-dev</code> and CIFAR-10-C mean accuracy are still below the current E1 baseline. The main issue appears to be optimization: early in training, E4 stays close to the identity regime for many epochs before moving into a more moderate <code>λ</code> range.
-          </p>
-          <p style="margin-bottom: 0;">
-            So the current conclusion is not that E4 already wins, but that E4 remains the most promising sample-wise direction while E1 is the present strong baseline. I also clarified that the current CIFAR-10 RGB implementation applies one inverse-tan profile shared across RGB channels. Next I will rerun RGB CIFAR with per-channel inverse-tan coefficients, and next week I plan to run E0, E1, and E4 on Pathfinder and additional benchmarks with three seeds.
-          </p>
-        </div>
-      </section>
+          <div class="equation">ω(Ω) = (2 / Δ) tan(Ω / 2),&nbsp;&nbsp; dω/dΩ = (1 / Δ) sec²(Ω / 2)</div>
+          <div class="grid three" style="margin-top: 18px;">
+            <article class="mini">
+              <h3>Established</h3>
+              <p>
+                The inverse-tan family itself is useful: a learned global λ already gives a strong
+                and interpretable stabilization baseline.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Current issue</h3>
+              <p>
+                The latest sample-wise follow-up suggests the present PH / spectrum controllers are
+                not making rich local decisions; they drift toward near-boundary scalar solutions.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Design implication</h3>
+              <p>
+                The next controller should act locally in frequency, not through another single
+                global or near-global Δλ.
+              </p>
+            </article>
+          </div>
+        </section>
 
-      <section class="card">
-        <h2>Current empirical picture</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Dataset</th>
-              <th>Exp</th>
-              <th>Best dev</th>
-              <th>Test@bestdev</th>
-              <th>Best test</th>
-              <th>Final test</th>
-              <th>CIFAR-C mean</th>
-              <th>Severity-5 mean</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>CIFAR-10 RGB</td>
-              <td>E0</td>
-              <td>91.32</td>
-              <td>90.86</td>
-              <td>91.42</td>
-              <td>91.41</td>
-              <td>74.36</td>
-              <td>60.30</td>
-            </tr>
-            <tr>
-              <td>CIFAR-10 RGB</td>
-              <td>E1</td>
-              <td>91.42</td>
-              <td>91.38</td>
-              <td>91.43</td>
-              <td>91.36</td>
-              <td>77.15</td>
-              <td>64.29</td>
-            </tr>
-            <tr>
-              <td>CIFAR-10 RGB</td>
-              <td>E4</td>
-              <td>91.66</td>
-              <td>91.30</td>
-              <td>91.40</td>
-              <td>91.36</td>
-              <td>75.57</td>
-              <td>61.63</td>
-            </tr>
-            <tr>
-              <td>CIFAR-100 RGB</td>
-              <td>E0</td>
-              <td>71.50</td>
-              <td>71.99</td>
-              <td>72.10</td>
-              <td>72.08</td>
-              <td>50.71</td>
-              <td>37.03</td>
-            </tr>
-            <tr>
-              <td>CIFAR-100 RGB</td>
-              <td>E1</td>
-              <td>71.42</td>
-              <td>72.51</td>
-              <td>72.56</td>
-              <td>72.55</td>
-              <td>51.79</td>
-              <td>38.17</td>
-            </tr>
-          </tbody>
-        </table>
+        <section class="panel" id="method">
+          <h2>Method snapshot</h2>
+          <div class="grid two">
+            <article class="mini">
+              <h3>Current main filter</h3>
+              <p class="muted">
+                The active line uses a PH-guided inverse-tan spectral normalizer with an exact
+                identity fallback when λ = 0.
+              </p>
+              <div class="equation">W<sub>λ</sub>(Ω) = β + (1 - β) / (1 + λ tan²(Ω / 2))</div>
+              <p class="note">
+                This keeps the intervention interpretable: increasing λ primarily suppresses
+                near-Nyquist components.
+              </p>
+            </article>
 
-        <div class="callout muted">
-          <strong>Reading this table.</strong>
-          E1 is the strongest confirmed baseline right now. E4 improves clearly over E0 and has the highest
-          best-dev score on CIFAR-10 RGB, but it still trails E1 on the finished clean+robust comparison.
-        </div>
-      </section>
+            <article class="mini">
+              <h3>Next controller shape</h3>
+              <p class="muted">
+                The next experiment keeps the stable global inverse-tan low-pass and adds a
+                frequency-local residual release around PH peaks instead of another scalar Δλ head.
+              </p>
+              <div class="equation">
+                W(ω; x) = W<sub>inv</sub>(ω; λ<sub>g</sub>) + (1 - W<sub>inv</sub>(ω; λ<sub>g</sub>)) B<sub>PH</sub>(ω; x)
+              </div>
+              <p class="note">
+                The aim is to preserve stability while reopening narrow bands that the PH signal
+                says are structurally meaningful.
+              </p>
+            </article>
+          </div>
+        </section>
 
-      <section class="card">
-        <h2>Current interpretation</h2>
-        <ul>
-          <li>The inverse-tan normalization family itself is clearly useful.</li>
-          <li><strong>E1</strong> is now the strongest <strong>confirmed</strong> RGB clean+robust baseline.</li>
-          <li><strong>E4</strong> remains the most promising sample-wise controller, but its headline claim should wait for better tuning and multi-seed evaluation.</li>
-          <li>The current E4 gap looks more like an <strong>optimization / operating-point issue</strong> than a failure of the PH-linear idea.</li>
-        </ul>
-      </section>
+        <section class="panel" id="weekly">
+          <h2>This week’s progress</h2>
+          <div class="wordbox">
+            <p>This week I consolidated the latest sample-wise follow-up runs and used them to narrow the next design step. On flattened CIFAR-10, the global inverse-tan baseline E1 remained stable at 86.44 best dev and 85.63 test@best-dev. The PH-MLP controller E5 finished at 86.54/85.63, while the spectrum-MLP controller E6 reached 86.56/85.69 at best dev and ended at 86.34/85.83. So the clean-accuracy gap between global and sample-wise control is still small. More importantly, E5’s shuffled-PH evaluation matched the non-shuffled result at the final checkpoint, which weakens the claim that the current PH head is using meaningful sample-specific structure.
 
-      <section class="card">
-        <h2>Important RGB implementation detail</h2>
-        <p>
-          In the current CIFAR-10 RGB / CIFAR-100 RGB code path, the inverse-tan attenuation profile is
-          shared across the three RGB channels for a given sample. So the current RGB results are based on a
-          <strong>shared-across-channels inverse-tan profile</strong>, not yet a per-channel controller.
-        </p>
-      </section>
+Pathfinder showed the same pattern. The raw baseline E0 reached 93.36/93.36 and E1 reached 93.27/93.11, while the uploaded E5 log stayed below them even in its strongest visible region. The controller traces are the key signal: CIFAR E5 ended with λ=0.1769 against base λ=2.1769, E6 with 0.2658 against 2.2658, and Pathfinder E5 pushed the other way toward the upper bound. This suggests that the current sample-wise Δλ heads are collapsing toward clamp limits instead of learning useful local frequency decisions.
 
-      <section class="card">
-        <h2>Current direction</h2>
-        <ul>
-          <li>Use <strong>E1</strong> as the current strong baseline.</li>
-          <li>Keep <strong>E4</strong> as the main sample-wise controller candidate.</li>
-          <li>Rerun RGB CIFAR with <strong>per-channel inverse-tan coefficients</strong>.</li>
-          <li>Run <strong>E0 / E1 / E4</strong> on Pathfinder and other benchmarks with <strong>three seeds</strong>.</li>
-          <li>Keep reporting controller behavior such as <code>λ</code>, <code>Δλ</code>, pass ratio, and gradient signals alongside accuracy.</li>
-        </ul>
-      </section>
+The main conclusion this week is therefore not that PH guidance failed, but that the scalar Δλ bottleneck is too restrictive. The next experiment is a PH-peak residual boost mask on top of the stable inverse-tan global filter.</p>
+          </div>
+        </section>
 
-      <section class="card">
-        <h2>Archived earlier direction</h2>
-        <details>
-          <summary>Earlier PC-band / PC-weight / dynamic masking notes</summary>
-          <p class="muted" style="margin-top: 10px;">
-            Earlier experiments focused on dataset-level phase-coherence masks and dynamic PH masking.
-            These remain useful as historical baselines, but the active direction is now the cleaner
-            PH-guided inverse-tan normalization path centered on E0 / E1 / E4.
-          </p>
-        </details>
-      </section>
+        <section class="panel" id="results">
+          <h2>Current empirical picture</h2>
 
-      <p class="muted">Last updated: 2026-03-29.</p>
+          <div class="subpanel">
+            <div class="subhead">
+              <div>
+                <h3>Milestone already established: RGB CIFAR</h3>
+                <p>
+                  These runs remain the strongest completed clean + robustness evidence for the
+                  inverse-tan line and define the current confirmed baseline story.
+                </p>
+              </div>
+            </div>
+
+            <table aria-label="RGB CIFAR milestone table">
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Exp</th>
+                  <th>Best dev</th>
+                  <th>Test@best-dev</th>
+                  <th>Best test</th>
+                  <th>Final test</th>
+                  <th>Corruption mean</th>
+                  <th>Severity-5 mean</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CIFAR-10 RGB</td>
+                  <td>E0</td>
+                  <td>91.32</td>
+                  <td>90.86</td>
+                  <td>91.42</td>
+                  <td>91.41</td>
+                  <td>74.36</td>
+                  <td>60.30</td>
+                </tr>
+                <tr>
+                  <td>CIFAR-10 RGB</td>
+                  <td>E1</td>
+                  <td>91.42</td>
+                  <td>91.38</td>
+                  <td>91.43</td>
+                  <td>91.36</td>
+                  <td>77.15</td>
+                  <td>64.29</td>
+                </tr>
+                <tr>
+                  <td>CIFAR-10 RGB</td>
+                  <td>E4</td>
+                  <td>91.66</td>
+                  <td>91.30</td>
+                  <td>91.40</td>
+                  <td>91.36</td>
+                  <td>75.57</td>
+                  <td>61.63</td>
+                </tr>
+                <tr>
+                  <td>CIFAR-100 RGB</td>
+                  <td>E0</td>
+                  <td>71.50</td>
+                  <td>71.99</td>
+                  <td>72.10</td>
+                  <td>72.08</td>
+                  <td>50.71</td>
+                  <td>37.03</td>
+                </tr>
+                <tr>
+                  <td>CIFAR-100 RGB</td>
+                  <td>E1</td>
+                  <td>71.42</td>
+                  <td>72.51</td>
+                  <td>72.56</td>
+                  <td>72.55</td>
+                  <td>51.79</td>
+                  <td>38.17</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p class="note">
+              Interpretation: E1 remains the strongest confirmed RGB clean + robustness baseline.
+              The RGB implementation still uses a single inverse-tan profile shared across channels
+              for each sample.
+            </p>
+          </div>
+
+          <div class="subpanel">
+            <div class="subhead">
+              <div>
+                <h3>Latest sample-wise follow-up: flattened CIFAR-10 and Pathfinder</h3>
+                <p>
+                  The newest runs sharpen the bottleneck: the sample-wise heads are competitive but
+                  still look much more like saturated scalar controllers than like meaningful local
+                  frequency selectors.
+                </p>
+              </div>
+            </div>
+
+            <table aria-label="Latest sample-wise follow-up table">
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Exp</th>
+                  <th>Best dev</th>
+                  <th>Test@best-dev</th>
+                  <th>Final / visible final</th>
+                  <th>Controller note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Flattened CIFAR-10</td>
+                  <td>E0</td>
+                  <td>86.72</td>
+                  <td>85.34</td>
+                  <td>85.52</td>
+                  <td>Raw baseline.</td>
+                </tr>
+                <tr>
+                  <td>Flattened CIFAR-10</td>
+                  <td>E1</td>
+                  <td>86.44</td>
+                  <td>85.63</td>
+                  <td>85.85</td>
+                  <td>Stable global λ baseline.</td>
+                </tr>
+                <tr>
+                  <td>Flattened CIFAR-10</td>
+                  <td>E5 (PH-MLP)</td>
+                  <td>86.54</td>
+                  <td>85.63</td>
+                  <td>85.63</td>
+                  <td>Final shuffled-PH matched the non-shuffled result; λ ≈ 0.1769 vs base λ ≈ 2.1769.</td>
+                </tr>
+                <tr>
+                  <td>Flattened CIFAR-10</td>
+                  <td>E6 (Spectrum-MLP)</td>
+                  <td>86.56</td>
+                  <td>85.69</td>
+                  <td>85.83</td>
+                  <td>Best clean score among current sample-wise runs, but λ still collapsed far below base λ.</td>
+                </tr>
+                <tr>
+                  <td>Pathfinder</td>
+                  <td>E0</td>
+                  <td>93.36</td>
+                  <td>93.36</td>
+                  <td>93.40</td>
+                  <td>Strong raw baseline.</td>
+                </tr>
+                <tr>
+                  <td>Pathfinder</td>
+                  <td>E1</td>
+                  <td>93.27</td>
+                  <td>93.11</td>
+                  <td>93.19</td>
+                  <td>Stable global λ baseline.</td>
+                </tr>
+                <tr>
+                  <td>Pathfinder</td>
+                  <td>E5 (PH-MLP)</td>
+                  <td>92.18<span class="muted">*</span></td>
+                  <td>92.25<span class="muted">*</span></td>
+                  <td>92.16<span class="muted">*</span></td>
+                  <td>Visible log stays below E0 / E1 and pushes toward the upper λ bound.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p class="note">
+              <span class="muted">*</span> Pathfinder E5 is shown from the uploaded visible log region, which runs through epoch 197.
+            </p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Interpretation</h2>
+          <div class="grid three">
+            <article class="mini">
+              <h3>Inverse-tan remains useful</h3>
+              <p>
+                The global-λ line is still the cleanest confirmed stabilization story, especially on
+                the completed RGB CIFAR evaluation.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>PH is not disproved</h3>
+              <p>
+                The latest follow-up does not show that topology is useless; it shows that the
+                current controller parameterization is too narrow.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Local release is the next move</h3>
+              <p>
+                A PH-peak residual boost is a better match to the failure mode than another scalar
+                Δλ or another near-global controller.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel" id="roadmap">
+          <h2>Roadmap</h2>
+          <ol class="timeline">
+            <li>
+              <strong>Implement PH-peak residual boosting.</strong>
+              Keep the stable global inverse-tan filter and add narrow PH-guided release bands.
+            </li>
+            <li>
+              <strong>Rerun flattened CIFAR-10 and Pathfinder with multi-seed tracking.</strong>
+              Report clean accuracy together with λ, base λ, pass ratio, and shuffled-PH controls.
+            </li>
+            <li>
+              <strong>Move beyond flattened images.</strong>
+              Test native 1D and 2D settings where “high frequency” is less entangled with flattening artifacts.
+            </li>
+          </ol>
+        </section>
+
+        <section class="panel" id="links">
+          <h2>Project materials</h2>
+          <div class="links-grid">
+            <a class="link-card" href="https://dongyeongkim22.github.io/Topo_S4/">
+              <span>Project page</span>
+              Current public homepage
+            </a>
+            <a class="link-card" href="https://www.overleaf.com/read/qvvrpygjhbvv#15a2ec">
+              <span>Overleaf draft</span>
+              Paper draft and write-up
+            </a>
+            <a class="link-card" href="https://github.com/DongyeongKim22/Topo_S4">
+              <span>GitHub repository</span>
+              Code, configs, and experiments
+            </a>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <footer>
+      Last updated: 2026-04-06 · Project status: active development
+    </footer>
 
     <script>
       if ("serviceWorker" in navigator) {
