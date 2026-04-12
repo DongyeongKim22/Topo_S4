@@ -1,108 +1,175 @@
-# Sample-wise controller follow-up addendum
+# PH-Sobolev: Sample-Adaptive Frequency Boost for State Space Models
 
-## 0. Status of last week's RGB CIFAR result (unchanged)
+## Overview
 
-The RGB CIFAR result from last week still provides the cleanest **confirmed** story for the inverse-tan line: **E1 remains the strongest completed global baseline**, and the earlier **E4** run is still best interpreted as a viable sample-wise pilot rather than a replacement for E1.
+State space models (SSMs) exhibit an implicit spectral bias toward low-frequency components. Even with full spectral coverage (e.g., S4D-DFouT initialization), the *learning dynamics* remain biased: high-frequency parameters receive weaker gradient signal due to the 1/f spectral decay of natural inputs.
 
-| Exp | Best dev | Epoch | Test@best-dev | Best test | Final test | CIFAR-C mean | Severity-5 mean |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| E0 | 91.32 | 175 | 90.86 | 91.42 | 91.41 | 74.36 | 60.30 |
-| E1 | 91.42 | 195 | 91.38 | 91.43 | 91.36 | 77.15 | 64.29 |
-| E4 | 91.66 | 191 | 91.30 | 91.40 | 91.36 | 75.57 | 61.63 |
+**PH-Sobolev** addresses this by applying a Sobolev-weighted frequency boost *selectively* to topologically stable spectral peaks identified via persistent homology (PH), rather than uniformly across all frequencies.
 
-**Carry-over interpretation.**  
-E1 is still the strongest confirmed RGB clean+robust model. E4 remains competitive and improves over E0, but it still does not beat E1 on the main held-out criteria. So this part of the write-up should stay cautious.
+### Key Ideas
 
-## 1. New long-run follow-up in the paper setting
+1. **Sample-adaptive PH mask**: For each input, H₀ superlevel persistence identifies stable spectral peaks and their frequency support regions
+2. **Selective Sobolev boost**: The filter `(1+f²)^β` is applied only to PH support bins; noise bins remain at identity
+3. **Forward-consistent**: The filter is applied in the forward pass, producing well-defined gradients via standard autograd
+4. **γ–β guideline**: The input spectral slope γ predicts the optimal boost exponent: `β ≈ γ/2`
 
-The newer evidence below comes from the long-sequence paper setting rather than the RGB CIFAR-C suite. It is therefore best read as **controller-selection / mechanism evidence**, not as a direct replacement of the RGB main table.
+### Theoretical Results
 
-### 1.1 Flattened CIFAR-10 (\texttt{lra_image}, single seed)
+- **Proposition**: Selective boost yields lower gradient variance than uniform boost: `tr(D_PH Σ D_PH*) ≤ tr(D_uni Σ D_uni*)`
+- **SNR Corollary**: When PH support aligns with signal-rich bins, gradient SNR improves
+- **PH Stability**: Peaks with persistence > 2ε survive ε-perturbations (bottleneck stability theorem)
+- **Nested Support**: α₂ ≥ α₁ ⟹ S(α₂) ⊆ S(α₁), giving support_alpha a structural interpretation
 
-| Exp | Controller | Best dev | Epoch | Test@best-dev | Best test | Final test |
-|---|---|---:|---:|---:|---:|---:|
-| E0 | Raw / no preprocessing | 86.72 | 189 | 85.34 | 85.69 | 85.52 |
-| E1 | Global learned \(\lambda\) | 86.44 | 186 | 85.63 | 86.00 | 85.85 |
-| E2 | PH lifetime rule | 85.28 | 191 | 84.92 | 84.99 | 84.95 |
-| E3 | PH lifetime + peak rule | 84.92 | 185 | 84.57 | 85.11 | 85.09 |
-| E5 | PH-tiny-MLP \(\Delta\lambda\) | 86.54 | 199 | 85.63 | 85.78 | 85.63 |
-| E6 | Spectrum-MLP \(\Delta\lambda\) | 86.56 | 190 | 85.69 | 85.93 | 85.83 |
+## Installation
 
-### 1.2 Pathfinder (single seed)
+```bash
+git clone <repo-url>
+cd topo_s4
 
-| Exp | Controller | Best dev | Epoch | Test@best-dev | Best test | Final / last test |
-|---|---|---:|---:|---:|---:|---:|
-| E0 | Raw / no preprocessing | 93.36 | 193 | 93.36 | 93.40 | 93.40 |
-| E1 | Global learned \(\lambda\) | 93.27 | 196 | 93.11 | 93.21 | 93.19 |
-| E5 | PH-tiny-MLP \(\Delta\lambda\) | 92.18 | 192 | 92.25 | 92.28 | 92.16* |
+# Dependencies
+pip install torch torchvision torchaudio numpy matplotlib --break-system-packages
 
-\* The uploaded Pathfinder E5 log ends at epoch 197, so the E5 row is based on the visible portion of that run rather than a completed epoch-199 summary.
+# S4D model (place in models/s4/)
+# Requires the S4D implementation from https://github.com/state-spaces/s4
+```
 
-## 2. Main interpretation
+## Quick Start
 
-The new follow-up weakens the old “sample-wise PH head is the next main model” story.
+### 1. Measure spectral slope γ
 
-On flattened CIFAR-10, the gap between the useful runs is very small. Relative to E0, **E1 improves test@best-dev by +0.29**, **E5 also improves by +0.29**, and **E6 improves by +0.35**. That is not enough to claim a meaningful sample-wise advantage, especially because **E2** and **E3** are clearly worse.
+```bash
+python empirical_bridge.py --task lra_image --experiment gap2 \
+    --cifar_root ./data/cifar --cifar_download \
+    --out_dir ./analysis/gamma
+```
 
-More importantly, the current PH-conditioned head does not show convincing PH dependence. In **E5**, the shuffled-PH evaluation gives the **same best-dev and the same test@best-dev** as the normal evaluation. So the current PH-MLP controller is not yet extracting a measurable benefit from the PH input itself.
+This outputs `input_spectral_slope` = γ. Use `β ≈ γ/2` as starting point.
 
-Pathfinder points in the same direction. In the currently available logs, **E0 remains best on best-dev and test@best-dev**, while **E5** stays below both **E0** and **E1** in the visible part of the run. So there is still no positive evidence that the current PH-conditioned scalar controller improves generalization in the paper setting.
+### 2. Run training
 
-The strongest positive statement that remains is therefore narrower: **the inverse-tan line itself still looks useful as a stabilizing / filtering prior, but the current sample-wise scalar controllers do not yet show a clear interpretability or accuracy gain over the simpler baselines.**
+```bash
+python s4d_ph_sobolev_runner_consistent.py \
+    --task lra_image \
+    --preproc ph_support \
+    --paper dfout \
+    --sobolev_beta 0.5 \
+    --boost_layer all \
+    --support_alpha 0.6 \
+    --freq_cut 0.6 \
+    --ph_weighting persistence \
+    --ph_max_peaks 15 \
+    --cifar_download \
+    --amp \
+    --name ph_sobolev_run \
+    --out_dir runs/experiments
+```
 
-## 3. Controller dynamics pointing to collapse
+### 3. Run baselines for comparison
 
-The current failure mode looks less like “PH is useless” and more like **scalar-\(\lambda\) controller collapse**.
+```bash
+# No boost (baseline)
+python s4d_ph_sobolev_runner_consistent.py \
+    --task lra_image --preproc none --paper dfout \
+    --cifar_download --amp --name baseline --out_dir runs/experiments
 
-On flattened CIFAR-10:
+# Uniform Sobolev (Yu et al. style)
+python s4d_ph_sobolev_runner_consistent.py \
+    --task lra_image --preproc uniform --paper dfout \
+    --sobolev_beta 0.5 --freq_cut 0.6 --boost_layer all \
+    --cifar_download --amp --name uniform --out_dir runs/experiments
+```
 
-- **E5** ends at \(\lambda=0.1769\) with \(\text{base\_lambda}=2.1769\), so \(\Delta\lambda \approx -2\).
-- **E6** ends at \(\lambda=0.2658\) with \(\text{base\_lambda}=2.2658\), so \(\Delta\lambda \approx -2\) again.
+## SLURM Sweep
 
-On Pathfinder:
+```bash
+# Phase 1: Scout best β and α (single seed)
+chmod +x run_ph_sobolev_fwd.sh
+./run_ph_sobolev_fwd.sh
 
-- The visible end of **E5** is \(\lambda \approx 7.6790\) with \(\text{base\_lambda} \approx 5.6790\), so \(\Delta\lambda \approx +2\).
+# Phase 2: Best config × 3 seeds
+SEEDS="2222 3333 4444" BETAS="0.5" ALPHAS="0.6" ./run_ph_sobolev_fwd.sh
 
-So the current sample-wise heads are not behaving like rich per-sample controllers. They are mostly behaving like **boundary-seeking scalar perturbations** around a learned base \(\lambda\).
+# Cross-task
+TASKS="lra_image lra_pathfinder sc35" SEEDS="2222 3333 4444" BETAS="0.5" ./run_ph_sobolev_fwd.sh
+```
 
-This also explains why “filtering helped training, but test accuracy stayed similar” does **not** yet imply a clean interpretability win. A reversible inverse-tan front-end can still stabilize the optimization path, but if the downstream S4 kernel can reconstruct what it needs, and if the controller itself collapses to near-global or saturated behavior, then the final test gap can remain very small.
+## Analysis Scripts
 
-## 4. What this means for the write-up
+### Gradient Statistics Validation
 
-The write-up should **not** currently say that PH-conditioned or spectrum-conditioned sample-wise controllers have already demonstrated better high-frequency interpretability.
+```bash
+# Exp A: PH mask variance (no model needed)
+python variance_analysis.py --task lra_image --experiment exp_a --cifar_download
 
-A better phrasing is:
+# Exp B: Gradient variance under different boost modes
+python variance_analysis.py --task lra_image --experiment exp_b \
+    --boost_layer all --sobolev_beta 1.0 --cifar_download
 
-> Recoverable inverse-tan filtering appears to stabilize the S4D training path, but the current scalar sample-wise controllers mostly collapse to near-global or boundary-saturated solutions. The next step is therefore not to claim that PH is already stronger, but to redesign the controller so that PH peak information can act locally rather than only through a single scalar \(\lambda\).
+# Exp C: Gradient direction consistency (cosine similarity)
+python variance_analysis.py --task lra_image --experiment exp_c \
+    --boost_layer all --sobolev_beta 1.0 --cifar_download
+```
 
-This makes the current evidence much more coherent:
-- global inverse-tan remains the strongest confirmed result,
-- current sample-wise controllers do not yet beat the bottleneck,
-- and the next method should target the bottleneck directly.
+### Empirical Bridge Experiments
 
-## 5. Next method direction: PH-peak residual boost
+```bash
+# Gap 1: PH persistence vs cross-sample consistency
+python empirical_bridge.py --task lra_image --experiment gap1 --cifar_download
 
-The cleanest next move is to **keep the global inverse-tan low-pass prior**, but add a **localized PH-peak release / boost** instead of relying on a single scalar \(\Delta\lambda\).
+# Gap 2: Spectral bias propagation (measures γ)
+python empirical_bridge.py --task lra_image --experiment gap2 --cifar_download
 
-One useful form is
+# Gap 3: Per-frequency gradient SNR
+python empirical_bridge.py --task lra_image --experiment gap3 --cifar_download
+```
 
-\[
-W(\omega;x)=W_{\mathrm{inv}}(\omega;\lambda_{\mathrm{global}})
-+\bigl(1-W_{\mathrm{inv}}(\omega;\lambda_{\mathrm{global}})\bigr)\,B_{\mathrm{PH}}(\omega;x),
-\]
+## γ–β Reference Table
 
-where \(B_{\mathrm{PH}}(\omega;x)\in[0,1]\) is a sum of narrow bumps centered at the top-\(k\) PH peak frequencies of sample \(x\).
+| Dataset | γ | Predicted β | HF Importance | Expected Effect |
+|---|---|---|---|---|
+| sCIFAR-10 | 0.702 | 0.35 – 0.53 | Low (shape/color) | Marginal |
+| SC35 | 1.080 | 0.54 – 0.81 | High (phonemes) | Strong |
+| Pathfinder | 0.298 | 0.15 – 0.22 | Low (spatial) | Minimal |
 
-Why this is a better next hypothesis:
+**Rule of thumb**: `β ≈ γ/2` for uniform, `β ∈ [γ/2, 0.75γ]` for PH-selective.
 
-1. It keeps the **global inverse-tan stability prior** that already seems useful.
-2. It avoids forcing all PH information through **one scalar**.
-3. It can reopen gradients in frequency regions that are effectively dead under the current scalar controller.
-4. It gives a clearer interpretability target: **global high-frequency suppression with local PH-guided release**.
+## Key Parameters
 
-## 6. Recommended headline for this week
+| Parameter | Default | Description |
+|---|---|---|
+| `--preproc` | `none` | `none` / `uniform` / `ph_support` |
+| `--sobolev_beta` | 1.0 | Boost exponent. Set via γ/2 guideline |
+| `--boost_layer` | `last` | `all` (recommended) or `last` (no effect in practice) |
+| `--support_alpha` | 0.0 | PH support width: 0=widest, 0.6=validated, 1.0=tightest |
+| `--freq_cut` | 0.25 | Normalized freq cutoff. Bins ≤ freq_cut are not boosted. Use 0.6 |
+| `--ph_weighting` | `binary` | `binary` or `persistence` (recommended) |
+| `--ph_max_peaks` | 15 | Maximum PH peaks to consider |
 
-A safe and strong summary sentence is:
+## File Structure
 
-> The current evidence confirms inverse-tan filtering as a useful stabilizing prior, but does not support a meaningful gain from the current PH- or spectrum-conditioned scalar sample-wise controllers; the next step is a PH-peak localized residual boost that preserves global stability while releasing selected high-frequency bands.
+```
+s4d_ph_sobolev_runner_consistent.py  # Main runner (forward-consistent)
+variance_analysis.py                  # Gradient statistics validation (Exp A/B/C)
+empirical_bridge.py                   # Empirical analysis (Gap 1-4, γ measurement)
+run_ph_sobolev_fwd.sh                 # SLURM sweep script
+collect_sweep.py                      # Sweep result aggregation
+run_sweep.sh                          # Variance sweep script
+models/s4/s4d.py                      # S4D model (external dependency)
+```
 
+## Citation
+
+```bibtex
+@article{kim2025phsobolev,
+  title={Sample-Adaptive Frequency Boost for State Space Models via Persistent Homology},
+  author={Kim, Dongyeong},
+  year={2025}
+}
+```
+
+## Acknowledgments
+
+This work builds on:
+- S4/S4D: Gu et al. (2022)
+- S4D-DFouT: Solozabal et al. (2025)
+- Tuning Frequency Bias: Yu et al. (2024)
