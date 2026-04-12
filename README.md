@@ -157,16 +157,6 @@ run_sweep.sh                          # Variance sweep script
 models/s4/s4d.py                      # S4D model (external dependency)
 ```
 
-## Citation
-
-```bibtex
-@article{kim2025phsobolev,
-  title={Sample-Adaptive Frequency Boost for State Space Models via Persistent Homology},
-  author={Kim, Dongyeong},
-  year={2025}
-}
-```
-
 ## Acknowledgments
 
 This work builds on:
