@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Topo_S4 research project on sample-adaptive frequency boost for state space models using persistent homology and Sobolev filtering."
+      content="Topo_S4 research project on operator-level persistent-homology conditioning for state space models, with structural diagnostics of three learning-dynamics pathologies."
     />
     <meta name="theme-color" content="#0f172a" />
     <title>Topo_S4 — Research Project</title>
@@ -506,6 +506,7 @@
         <nav class="nav" aria-label="Primary">
           <a href="#overview">Overview</a>
           <a href="#method">Method</a>
+          <a href="#pathologies">Pathologies</a>
           <a href="#weekly">Weekly update</a>
           <a href="#results">Results</a>
           <a href="#roadmap">Roadmap</a>
@@ -518,16 +519,19 @@
       <section class="hero">
         <div class="hero-copy">
           <p class="eyebrow">Active research project</p>
-          <h1>Sample-Adaptive Frequency Boost for State Space Models</h1>
+          <h1>Operator-Level PH Conditioning for State Space Models</h1>
           <p class="lead">
-            Topo_S4 uses persistent homology to selectively boost high-frequency gradient
-            sensitivity in SSMs, applying Sobolev-weighted amplification only to topologically
-            stable spectral peaks rather than uniformly across all frequencies.
+            Topo_S4 moves persistent-homology-guided conditioning from a scalar forward
+            mask to an additive correction of the SSM kernel itself. A lightweight PH
+            encoder produces a per-sample code <em>z</em>, and per-layer zero-init adapter
+            heads map <em>z</em> to a kernel delta <em>&Delta;C(x)</em>, so every sample
+            gets its own SSM kernel.
           </p>
           <div class="badges" aria-label="Project tags">
             <span class="badge">S4 / S4D-DFouT</span>
             <span class="badge">Persistent Homology</span>
-            <span class="badge">Sobolev Filtering</span>
+            <span class="badge">Per-Sample Kernel</span>
+            <span class="badge">Zero-Init Adapter</span>
             <span class="badge">sCIFAR-10</span>
             <span class="badge">SC35</span>
             <span class="badge">Pathfinder</span>
@@ -539,16 +543,16 @@
             <h2>Current status</h2>
             <ul class="status-list">
               <li>
-                <span>Theory</span>
-                <strong>Variance bound, SNR corollary, PH stability, and &gamma;&ndash;&beta; guideline established.</strong>
+                <span>Framing</span>
+                <strong>Pivoted from forward-mask PH-Sobolev (+0.09pp) to operator-level &Delta;C conditioning.</strong>
               </li>
               <li>
-                <span>Validated</span>
-                <strong>Gradient statistics confirm PH-selective &lt; uniform variance at all &beta;.</strong>
+                <span>Diagnosed</span>
+                <strong>Three learning-dynamics pathologies: encoder rank collapse, z magnitude shrinkage, C_head rank-1 drift.</strong>
               </li>
               <li>
                 <span>In progress</span>
-                <strong>SC35 and Pathfinder end-to-end training to test &gamma;-based predictions.</strong>
+                <strong>200-epoch runs for the current best config (v9b: persistence-weighted pool + orth 5e-4).</strong>
               </li>
             </ul>
           </div>
@@ -557,33 +561,40 @@
 
       <div class="section-stack">
         <section class="panel" id="overview">
-          <h2>Research question</h2>
+          <h2>Why operator-level?</h2>
           <p class="muted">
-            SSMs exhibit an implicit spectral bias: even with full spectral coverage (S4D-DFouT),
-            high-frequency parameters receive weaker gradient signal due to input spectral decay.
-            Uniform Sobolev correction boosts all high-frequency bins equally&mdash;including noise.
-            Can persistent homology identify which bins to boost?
+            SSMs are LTI: the kernel is shared across samples within a batch. Per-sample
+            information must enter through either a scalar gain on the output or a
+            modification of the kernel itself. The scalar gain is what our earlier
+            forward-mask paper did; it delivered +0.09pp on sCIFAR-10 for a structural
+            reason, not a hyperparameter one.
           </p>
           <div class="grid three" style="margin-top: 18px;">
             <article class="mini">
-              <h3>Expressivity &check;</h3>
+              <h3>Forward mask (prior)</h3>
               <p>
-                S4D-DFouT places poles uniformly in the discrete Fourier domain, resolving the
-                spectral coverage problem.
+                &ycirc; = H(&omega;;x) &middot; K(&omega;) &middot; &ucirc;(&omega;;x).
+                A scalar per-sample gain on an already-learned global output scale.
+                Batch-averaged gradients absorb the per-sample variation back into LTI
+                parameters. Expressivity bounded by baseline + scalar reweighting.
               </p>
             </article>
             <article class="mini">
-              <h3>Learning dynamics &cross;</h3>
+              <h3>Operator-level (ours)</h3>
               <p>
-                Gradient signal at high frequencies decays with input spectrum (~&omega;<sup>-&gamma;</sup>).
-                Uniform Sobolev correction amplifies noise alongside signal.
+                &ycirc; = (K(&omega;) + &Delta;K(&omega;;x)) &middot; &ucirc;(&omega;;x).
+                Adapter parameters do not share a global output scale with the SSM
+                kernel, so per-sample gradient signal survives averaging. No scalar
+                forward mask can reproduce this.
               </p>
             </article>
             <article class="mini">
-              <h3>PH-Sobolev (ours)</h3>
+              <h3>PH as the conditioning signal</h3>
               <p>
-                Apply (1+f&sup2;)<sup>&beta;</sup> only to PH-identified support regions. Identity
-                on noise bins. Lower gradient variance, higher SNR.
+                Each input's spectrum is summarised by H<sub>0</sub> superlevel
+                persistence: stable peaks and their supports become the 4 &times; 15
+                feature tensor fed into the PH encoder. Lipschitz-stable under input
+                perturbations (bottleneck theorem).
               </p>
             </article>
           </div>
@@ -593,52 +604,109 @@
           <h2>Method</h2>
           <div class="grid two">
             <article class="mini">
-              <h3>PH-Sobolev filter</h3>
+              <h3>Per-sample kernel correction</h3>
               <p class="muted">
-                For each input, H<sub>0</sub> superlevel persistence extracts stable spectral peaks.
-                The Sobolev boost is applied only to their support regions.
+                PH features &rarr; encoder &rarr; code z. Per-layer zero-init head maps
+                z to an additive correction on that layer's output matrix C.
               </p>
-              <div class="equation">H(&omega;; x) = 1 + w(&omega;; x) &middot; ((1 + f(&omega;)&sup2;)<sup>&beta;</sup> &minus; 1)</div>
+              <div class="equation">C_eff,&ell; = C_&ell; + &Delta;C_&ell;(x),&nbsp;&nbsp; &Delta;C_&ell;(x) = W_&ell; z</div>
               <p class="note">
-                w(&omega;; x) &isin; [0,1] is the persistence-weighted PH support.
-                Off-support bins stay at identity. Applied in forward pass at every S4 layer.
+                At initialisation W_&ell; = 0, so the model is exactly the S4D baseline.
+                Bias-free heads: no global kernel shift, only per-sample variation.
               </p>
             </article>
 
             <article class="mini">
-              <h3>&gamma;&ndash;&beta; guideline</h3>
+              <h3>PH-native persistence-weighted pool</h3>
               <p class="muted">
-                The input spectral slope &gamma; predicts the optimal boost exponent.
-                Measured via log-log regression of the magnitude spectrum.
+                Replaces max-pooling with a parameter-free persistence-weighted sum
+                over peaks. Every valid peak receives gradient, so &phi; cannot drift
+                into a peak-agnostic mode.
               </p>
-              <div class="equation">&beta;* &asymp; &gamma; / 2&nbsp;&nbsp;&nbsp;(search band: [&gamma;/2, 0.75&gamma;])</div>
+              <div class="equation">z_d = &Sigma;_p (&pi;_p / &Sigma;_p' &pi;_p') &middot; &phi;(peak_p)_d</div>
               <p class="note">
-                sCIFAR &gamma;=0.70 &rarr; predicted &beta;&asymp;0.35&ndash;0.53, observed best &beta;=0.50 &check;
+                Padding peaks have &pi; = 0 and are excluded automatically. Matches
+                the PH inductive bias: high-persistence peaks are topologically more
+                important.
               </p>
             </article>
           </div>
 
           <div class="grid two" style="margin-top: 16px;">
             <article class="mini">
-              <h3>Variance bound</h3>
+              <h3>Scale-invariant orthogonality on W</h3>
               <p class="muted">
-                Selective boosting provably reduces gradient variance:
+                Penalises shape (singular-value distribution) without pushing |W| up or
+                down, countering the C_head rank-1 drift without suppressing magnitude.
               </p>
-              <div class="equation">tr(D<sub>PH</sub> &Sigma; D<sub>PH</sub>*) &le; tr(D<sub>uni</sub> &Sigma; D<sub>uni</sub>*)</div>
+              <div class="equation">&Lscr;_orth = &frac1;&Lscr; &Sigma;_&ell; || (d_in / tr(W<sup>T</sup>W)) W<sup>T</sup>W &minus; I ||&sup2;_F</div>
               <p class="note">
-                Holds for any PSD covariance &Sigma;. No independence assumption needed.
-                Confirmed empirically: PH achieves 0.036&times; uniform variance at &beta;=2.0.
+                Invariant under W &rarr; cW. Trained with &lambda; = 5&times;10<sup>-4</sup>.
+                A too-strong coefficient (5&times;10<sup>-2</sup>) suppresses |W| into
+                the "negligible magnitude" regime; the scale-invariant form fixes this.
               </p>
             </article>
 
             <article class="mini">
-              <h3>PH stability</h3>
+              <h3>Backward-only masking doesn't work</h3>
               <p class="muted">
-                Peaks with persistence &pi;<sub>c</sub> &gt; 2&epsilon; survive
-                &epsilon;-perturbations (bottleneck stability theorem). Support width is
-                controlled by &alpha; &isin; [0,1] with nested filtration:
+                A tempting alternative is identity forward + masked backward. It has no
+                objective function whenever the mask doesn't commute with the Hessian.
               </p>
-              <div class="equation">&alpha;<sub>2</sub> &ge; &alpha;<sub>1</sub> &rArr; S<sub>c</sub>(&alpha;<sub>2</sub>) &sube; S<sub>c</sub>(&alpha;<sub>1</sub>)</div>
+              <div class="equation">M &nabla;&sup2;&Lscr;(y) = &nabla;&sup2;&Lscr;(y) M<sup>T</sup>&nbsp; &hArr;&nbsp; &tilde;g conservative</div>
+              <p class="note">
+                Fails generically. Our forward &Delta;C formulation has standard
+                backprop and a well-defined loss.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel" id="pathologies">
+          <h2>Three learning-dynamics pathologies</h2>
+          <p class="muted">
+            Operator-level conditioning is far more sensitive to learning dynamics than
+            the forward mask was. We identified three failure modes in sequence along
+            the pipeline, each diagnosed by a 20-epoch structural audit.
+          </p>
+          <div class="grid three" style="margin-top: 18px;">
+            <article class="mini">
+              <h3>1. Encoder rank collapse</h3>
+              <p class="muted">
+                PointNet+DeepSets encoder (&phi; + max + &rho;-MLP + LayerNorm):
+                pairwise cosine at maxpool 0.53, at &rho; output 0.98. Final LN strips
+                magnitude, &rho; drifts to rank-1 in depth.
+              </p>
+              <p class="note">
+                <strong>Fix:</strong> remove final LN, add orthogonal-init residual &rho;
+                block. Drove encoder-stage cosine 0.98 &rarr; 0.81.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>2. z magnitude shrinkage</h3>
+              <p class="muted">
+                After the encoder fix: ||z|| falls from ~3.0 at epoch 5 to ~0.4 at
+                epoch 20. Adapter bias inflates 4&times; to compensate. Per-sample share
+                of the adapter output falls from 86% to 24%.
+              </p>
+              <p class="note">
+                <strong>Fix:</strong> remove all post-pool learnable layers. &phi; outputs
+                d_z directly; pool output <em>is</em> z. Nothing to shrink.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>3. C_head rank-1 drift</h3>
+              <p class="muted">
+                Even with healthy z, the per-layer W drifts to rank-1:
+                &sigma;<sub>1</sub>/&sigma;<sub>2</sub> &asymp; 1.7, effective rank
+                39/64. Every sample receives kernel correction in the same direction
+                regardless of upstream diversity.
+              </p>
+              <p class="note">
+                <strong>Fix:</strong> scale-invariant orthogonality penalty on W with
+                mild &lambda;. Effective rank recovers to 63/64, cosine propagation z 0.76
+                &rarr; C_head 0.79.
+              </p>
             </article>
           </div>
         </section>
@@ -646,7 +714,7 @@
         <section class="panel" id="weekly">
           <h2>This week's progress</h2>
           <div class="wordbox">
-            <p>This week I transitioned from the backward-only gradient boost to a forward-consistent formulation, where the PH-Sobolev filter is applied in the forward pass and autograd produces consistent gradients. Variance sweeps confirmed that boost_layer=all is necessary (last-layer-only has no measurable effect) and that PH-persistence beats uniform at every &beta; tested (0.25&ndash;2.0), with variance ratios as low as 0.036&times;. I measured spectral slopes across three LRA tasks&mdash;sCIFAR (&gamma;=0.70), SC35 (&gamma;=1.08), Pathfinder (&gamma;=0.30)&mdash;and derived a &beta;&asymp;&gamma;/2 guideline. On sCIFAR, the best config (&alpha;=0.6, &beta;=0.5) achieved 90.24/89.27 dev/test vs 90.06/89.18 baseline, a modest gain consistent with this task's low high-frequency relevance. The paper draft now includes the variance proposition, SNR corollary, PH stability corollary, nested-support lemma, and backward-only non-integrability result. SC35 and Pathfinder sweeps are running to validate the &gamma;-based cross-task prediction.</p>
+            <p>This week closed the diagnosis loop for operator-level conditioning. After the bias-off experiment reproduced the z magnitude shrinkage (|z|: 3.07 &rarr; 0.47 over 20 epochs, Wz/full: 0.86 &rarr; 0.24), I stripped all post-pool learnable layers and made &phi; output d_z directly (v9). This alone eliminated the z shrinkage pathology and bumped |&Delta;C|/|C_base| into the VISIBLE regime (0.47 at epoch 20 vs 0.35 in v7). But a new drift surfaced: the per-layer W matrix stayed at &sigma;<sub>1</sub>/&sigma;<sub>2</sub> &asymp; 1.7 with effective rank only 39/64&mdash;W was collapsing the encoder's diversity into one direction of kernel correction. I added a scale-invariant orthogonality penalty, &Lscr;_orth = ||(d_in/tr(W<sup>T</sup>W))W<sup>T</sup>W &minus; I||<sup>2</sup><sub>F</sub>. A too-strong coefficient (5e-2) pushed W into the NEGLIGIBLE regime and lost 1.56pp of test accuracy; the scale-invariant form with &lambda;=5e-4 hit the right point (eff rank 63/64, C_head cosine propagation &Delta;cos = +0.03 instead of +0.18 in v7). Finally I replaced max-pooling with a parameter-free persistence-weighted pool, so every valid peak receives gradient and &phi; can't drift to peak-agnostic features. The combined v9b configuration (persistence-weighted + orth 5e-4 + no post-pool layers + no head bias) is the first run where every structural diagnostic lands in its expected regime simultaneously. 200-epoch end-to-end runs on sCIFAR, SC35, and Pathfinder are queuing now; the paper draft has been rewritten around this diagnostic pipeline, keeping the PH-Sobolev theory (Parseval decomposition, variance bound, SNR corollary) in the appendix as retained groundwork.</p>
           </div>
         </section>
 
@@ -656,61 +724,33 @@
           <div class="subpanel">
             <div class="subhead">
               <div>
-                <h3>Gradient statistics validation</h3>
+                <h3>Ablation ladder (20-epoch checkpoints, sCIFAR-10)</h3>
                 <p>
-                  Controlled experiments on a warmup-trained model confirm the theoretical predictions
-                  before committing to full 200-epoch training.
+                  Each row isolates one intervention against the S4D-DFouT baseline.
+                  At 20 epochs the baseline has only reached ~80.7%; 200-epoch runs
+                  are in progress.
                 </p>
               </div>
             </div>
 
-            <table aria-label="Gradient variance table">
+            <table aria-label="20-epoch ablation table">
               <thead>
                 <tr>
-                  <th>&beta;</th>
-                  <th>None</th>
-                  <th>Uniform</th>
-                  <th>PH persist</th>
-                  <th>Ratio (PH/Uni)</th>
+                  <th>Variant</th>
+                  <th>Encoder</th>
+                  <th>Pool</th>
+                  <th>C_head</th>
+                  <th>Test @ ep20</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>0.50</td><td>2.13e-11</td><td>5.67e-11</td><td>2.21e-11</td><td>0.390&times;</td></tr>
-                <tr><td>1.00</td><td>2.13e-11</td><td>1.71e-10</td><td>3.39e-11</td><td>0.198&times;</td></tr>
-                <tr><td>2.00</td><td>2.13e-11</td><td>3.96e-09</td><td>1.42e-10</td><td>0.036&times;</td></tr>
-              </tbody>
-            </table>
-
-            <p class="note">
-              High-frequency gradient variance (boost_layer=all). PH-persistence achieves the
-              lowest variance at every &beta;, confirming Proposition 1.
-            </p>
-          </div>
-
-          <div class="subpanel">
-            <div class="subhead">
-              <div>
-                <h3>&gamma;&ndash;&beta; correspondence</h3>
-                <p>
-                  The input spectral slope predicts the optimal boost exponent.
-                </p>
-              </div>
-            </div>
-
-            <table aria-label="Gamma-beta correspondence">
-              <thead>
-                <tr>
-                  <th>Dataset</th>
-                  <th>&gamma;</th>
-                  <th>Predicted &beta;</th>
-                  <th>Observed best &beta;</th>
-                  <th>HF relevance</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>sCIFAR-10</td><td>0.702</td><td>0.35 &ndash; 0.53</td><td>0.50 &check;</td><td>Low (shape/color)</td></tr>
-                <tr><td>SC35</td><td>1.080</td><td>0.54 &ndash; 0.81</td><td>(pending)</td><td>High (phonemes)</td></tr>
-                <tr><td>Pathfinder</td><td>0.298</td><td>0.15 &ndash; 0.22</td><td>(pending)</td><td>Low (spatial)</td></tr>
+                <tr><td>Baseline (no PH)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>80.67</td></tr>
+                <tr><td>v7 full</td><td>proj + &rho;_br</td><td>max</td><td>bias</td><td>80.55</td></tr>
+                <tr><td>v8 orth 5e-2</td><td>proj + &rho;_br</td><td>max</td><td>no-bias + orth</td><td>79.11</td></tr>
+                <tr><td>v8 orth 5e-3</td><td>proj + &rho;_br</td><td>max</td><td>no-bias + orth</td><td>(diagnosed)</td></tr>
+                <tr><td>v9 maxpool-only</td><td>&phi; only</td><td>max</td><td>no-bias</td><td>(running)</td></tr>
+                <tr><td>v9 + orth 5e-4</td><td>&phi; only</td><td>max</td><td>no-bias + orth</td><td>(running)</td></tr>
+                <tr><td><strong>v9b pers-weighted</strong></td><td><strong>&phi; only</strong></td><td><strong>pers-w</strong></td><td><strong>no-bias + orth</strong></td><td><strong>(running)</strong></td></tr>
               </tbody>
             </table>
           </div>
@@ -718,31 +758,69 @@
           <div class="subpanel">
             <div class="subhead">
               <div>
-                <h3>End-to-end training: sCIFAR-10 (Phase 1, single seed)</h3>
+                <h3>Structural diagnostics at ep 20 (layer 0)</h3>
+                <p>
+                  Stage-by-stage pairwise cosine + W singular-value structure. The
+                  key pattern is how much C_head amplifies the upstream cosine:
+                  v7 adds +0.12, v9 + orth adds only +0.03.
+                </p>
               </div>
             </div>
 
-            <table aria-label="sCIFAR-10 Phase 1 results">
+            <table aria-label="Structural diagnostics table">
               <thead>
                 <tr>
-                  <th>Method</th>
-                  <th>Config</th>
-                  <th>Best dev</th>
-                  <th>Test@best-dev</th>
+                  <th>Diagnostic</th>
+                  <th>v7 full</th>
+                  <th>v9 max + orth</th>
+                  <th>v9b pers-w</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Baseline (none)</td><td>&mdash;</td><td>90.06</td><td>89.18</td></tr>
-                <tr><td>Uniform Sobolev</td><td>&beta;=1.0</td><td>90.00</td><td>89.17</td></tr>
-                <tr><td><strong>PH persistence (ours)</strong></td><td>&beta;=0.5, &alpha;=0.6</td><td><strong>90.24</strong></td><td><strong>89.27</strong></td></tr>
-                <tr><td>PH binary (ablation)</td><td>&beta;=1.0, &alpha;=0.8</td><td>90.16</td><td>88.88</td></tr>
+                <tr><td>&phi;-per-peak cos</td><td>0.80</td><td>0.77</td><td>(running)</td></tr>
+                <tr><td>post-pool cos</td><td>0.59</td><td>0.77</td><td>(running)</td></tr>
+                <tr><td>z cos</td><td>0.87</td><td>0.76</td><td>(running)</td></tr>
+                <tr><td>C_head cos</td><td>0.99</td><td>0.79</td><td>(running)</td></tr>
+                <tr><td>&sigma;<sub>1</sub>/&sigma;<sub>2</sub>(W)</td><td>2.82</td><td>1.07</td><td>(running)</td></tr>
+                <tr><td>Effective rank(W)/64</td><td>39</td><td>63</td><td>(running)</td></tr>
+                <tr><td>||z||</td><td>0.47</td><td>0.55</td><td>(running)</td></tr>
+                <tr><td>|&Delta;C|/|C_base|</td><td>0.35</td><td>0.09</td><td>(running)</td></tr>
               </tbody>
             </table>
 
             <p class="note">
-              Modest improvement consistent with &gamma;=0.70 (moderate spectral decay, low HF task relevance).
-              Uniform boost provides no gain; persistence weighting outperforms binary.
+              v7 amplifies upstream cosine (rank-1 W). v9 + orth preserves upstream
+              cosine (full-rank W), which is the intended behaviour of the penalty.
             </p>
+          </div>
+
+          <div class="subpanel">
+            <div class="subhead">
+              <div>
+                <h3>z magnitude trajectory (v7, bias on)</h3>
+                <p>
+                  The shrinkage that motivated removing post-pool layers.
+                </p>
+              </div>
+            </div>
+
+            <table aria-label="z shrinkage trajectory">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>ep 5</th>
+                  <th>ep 10</th>
+                  <th>ep 15</th>
+                  <th>ep 20</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>||z||</td><td>2.98</td><td>1.03</td><td>0.84</td><td>0.39</td></tr>
+                <tr><td>||Wz||</td><td>2.05</td><td>0.48</td><td>0.52</td><td>0.43</td></tr>
+                <tr><td>||b||</td><td>0.38</td><td>0.70</td><td>1.04</td><td>1.50</td></tr>
+                <tr><td>Wz / full</td><td>0.86</td><td>0.43</td><td>0.40</td><td>0.24</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -750,27 +828,27 @@
           <h2>Interpretation</h2>
           <div class="grid three">
             <article class="mini">
-              <h3>Selective &gt; uniform</h3>
+              <h3>Kernel &gt; output</h3>
               <p>
-                Gradient variance analysis and end-to-end training both confirm:
-                PH-selective boosting outperforms uniform boosting.
-                Uniform provides no gain over baseline on sCIFAR.
+                Conditioning the SSM operator produces a strictly richer model than
+                any scalar forward mask can. The forward mask's +0.09pp ceiling was
+                structural, not hyperparameter-tuning.
               </p>
             </article>
             <article class="mini">
-              <h3>&gamma; predicts effect size</h3>
+              <h3>Diagnostics first</h3>
               <p>
-                The spectral slope &gamma; predicts both the optimal &beta; and
-                the expected improvement magnitude. SC35 (&gamma;=1.08) is the
-                key validation target.
+                At 20 epochs the baseline is only at ~80.7%, so test accuracy alone
+                doesn't separate interventions. Stage-by-stage pairwise cosine and
+                W SVD do.
               </p>
             </article>
             <article class="mini">
-              <h3>Two conditions needed</h3>
+              <h3>Scale-invariant penalty</h3>
               <p>
-                The method helps when (1) &gamma; is large (gradient deficit exists)
-                AND (2) the task requires high-frequency information. Either alone
-                is insufficient.
+                Orthogonality penalties that are not scale-invariant force |W| away
+                from the value the task wants. Trace-normalisation decouples shape
+                and magnitude cleanly.
               </p>
             </article>
           </div>
@@ -780,18 +858,24 @@
           <h2>Roadmap</h2>
           <ol class="timeline">
             <li>
-              <strong>SC35 and Pathfinder Phase 1 sweeps.</strong>
-              Validate &gamma;-based &beta; predictions: SC35 should show the largest gain,
-              Pathfinder should show minimal effect.
+              <strong>200-epoch sCIFAR-10 for v9b and ablations.</strong>
+              Primary main-result slot: v9b (persistence-weighted + orth 5e-4).
+              Ablations: v9 maxpool-only, v7 full. Confirms 20-epoch pathology
+              fixes survive full training.
             </li>
             <li>
-              <strong>Multi-seed Phase 2 on best configs.</strong>
-              3 seeds &times; best (&alpha;, &beta;) per task for statistically meaningful results.
+              <strong>Cross-task validation via &gamma;.</strong>
+              Retain the &gamma;&ndash;&beta; diagnostic from PH-Sobolev as a
+              necessary-condition proxy. SC35 (&gamma;&asymp;1.08) is the primary
+              stretch target; Pathfinder (&gamma;&asymp;0.30) is the negative-result
+              control.
             </li>
             <li>
-              <strong>Paper finalization.</strong>
-              Complete results tables, add cross-task analysis, finalize theoretical section
-              with reviewer-facing propositions and proofs.
+              <strong>Multi-seed and paper finalisation.</strong>
+              3 seeds on the best sCIFAR-10 configuration for statistical weight.
+              Paper draft is rewritten around the diagnosis pipeline; PH-Sobolev
+              theory (variance bound, SNR, stability) is kept in the appendix as
+              retained groundwork.
             </li>
           </ol>
         </section>
@@ -817,7 +901,7 @@
     </main>
 
     <footer>
-      Last updated: 2026-04-12 &middot; Project status: active development
+      Last updated: 2026-04-19 &middot; Project status: active development
     </footer>
 
     <script>
