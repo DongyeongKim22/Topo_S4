@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Topo_S4 research project on operator-level persistent-homology conditioning for state space models, with structural diagnostics of three learning-dynamics pathologies."
+      content="Topo_S4 research project: DFouT provides frequency coverage; persistent homology and group-delay reliability select sample-specific high-frequency supports for zero-parameter C-residue gating."
     />
     <meta name="theme-color" content="#0f172a" />
-    <title>Topo_S4 — Research Project</title>
+    <title>Topo_S4 — Reliability-Weighted PH Conditioning</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <style>
       :root {
@@ -20,6 +20,8 @@
         --line: #d7e0ef;
         --accent: #1d4ed8;
         --accent-2: #0f766e;
+        --good: #047857;
+        --warn: #b45309;
         --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
         --radius: 20px;
         --radius-sm: 14px;
@@ -27,10 +29,7 @@
       }
 
       * { box-sizing: border-box; }
-
-      html {
-        scroll-behavior: smooth;
-      }
+      html { scroll-behavior: smooth; }
 
       body {
         margin: 0;
@@ -42,10 +41,7 @@
         font: 16px/1.7 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+      a { color: inherit; text-decoration: none; }
 
       .wrap {
         width: min(calc(100% - 32px), var(--content));
@@ -75,9 +71,7 @@
         font-size: 1.1rem;
       }
 
-      .brand span {
-        color: var(--accent);
-      }
+      .brand span { color: var(--accent); }
 
       .nav {
         display: flex;
@@ -92,13 +86,9 @@
         transition: color 0.2s ease;
       }
 
-      .nav a:hover {
-        color: var(--ink);
-      }
+      .nav a:hover { color: var(--ink); }
 
-      main {
-        padding: 36px 0 56px;
-      }
+      main { padding: 36px 0 56px; }
 
       .hero {
         display: grid;
@@ -116,9 +106,7 @@
         border-radius: var(--radius);
       }
 
-      .hero-copy {
-        padding: 34px;
-      }
+      .hero-copy { padding: 34px; }
 
       .eyebrow {
         display: inline-flex;
@@ -150,7 +138,7 @@
 
       .lead {
         margin: 0;
-        max-width: 64ch;
+        max-width: 68ch;
         color: var(--muted);
         font-size: 1.08rem;
       }
@@ -206,9 +194,7 @@
         margin-bottom: 4px;
       }
 
-      .status-list strong {
-        font-size: 1rem;
-      }
+      .status-list strong { font-size: 1rem; }
 
       .section-stack {
         display: grid;
@@ -216,9 +202,7 @@
         margin-top: 22px;
       }
 
-      .panel {
-        padding: 28px;
-      }
+      .panel { padding: 28px; }
 
       .panel h2 {
         margin: 0 0 14px;
@@ -232,22 +216,12 @@
         letter-spacing: -0.01em;
       }
 
-      .muted {
-        color: var(--muted);
-      }
+      .muted { color: var(--muted); }
 
-      .grid {
-        display: grid;
-        gap: 16px;
-      }
-
-      .grid.three {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .grid.two {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+      .grid { display: grid; gap: 16px; }
+      .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
       .mini {
         border: 1px solid var(--line);
@@ -257,8 +231,16 @@
       }
 
       .mini p:last-child,
-      .panel p:last-child {
-        margin-bottom: 0;
+      .panel p:last-child { margin-bottom: 0; }
+
+      .kpi {
+        display: block;
+        font-size: 1.65rem;
+        line-height: 1.15;
+        letter-spacing: -0.04em;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 6px;
       }
 
       .equation {
@@ -286,13 +268,9 @@
         border-radius: var(--radius-sm);
       }
 
-      .wordbox p {
-        margin: 0;
-      }
+      .wordbox p { margin: 0; }
 
-      .subpanel + .subpanel {
-        margin-top: 22px;
-      }
+      .subpanel + .subpanel { margin-top: 22px; }
 
       .subhead {
         display: flex;
@@ -305,7 +283,7 @@
       .subhead p {
         margin: 0;
         color: var(--muted);
-        max-width: 70ch;
+        max-width: 74ch;
       }
 
       table {
@@ -318,9 +296,7 @@
         background: #fff;
       }
 
-      thead {
-        background: #eff5ff;
-      }
+      thead { background: #eff5ff; }
 
       th, td {
         text-align: left;
@@ -329,9 +305,7 @@
         border-bottom: 1px solid var(--line);
       }
 
-      tbody tr:last-child td {
-        border-bottom: 0;
-      }
+      tbody tr:last-child td { border-bottom: 0; }
 
       th {
         font-size: 0.9rem;
@@ -339,9 +313,7 @@
         font-weight: 700;
       }
 
-      td {
-        font-size: 0.96rem;
-      }
+      td { font-size: 0.96rem; }
 
       .note {
         margin-top: 12px;
@@ -413,9 +385,8 @@
         .hero,
         .grid.two,
         .grid.three,
-        .links-grid {
-          grid-template-columns: 1fr;
-        }
+        .grid.four,
+        .links-grid { grid-template-columns: 1fr; }
 
         .subhead {
           flex-direction: column;
@@ -431,13 +402,9 @@
 
         .hero-copy,
         .hero-panel,
-        .panel {
-          padding: 22px;
-        }
+        .panel { padding: 22px; }
 
-        th, td {
-          padding: 10px 9px;
-        }
+        th, td { padding: 10px 9px; }
 
         .nav {
           gap: 12px;
@@ -455,6 +422,8 @@
           --line: #24324a;
           --accent: #60a5fa;
           --accent-2: #34d399;
+          --good: #34d399;
+          --warn: #fbbf24;
           --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
         }
 
@@ -476,13 +445,8 @@
           border-color: rgba(96, 165, 250, 0.18);
         }
 
-        thead {
-          background: #13213b;
-        }
-
-        th {
-          color: #bfdbfe;
-        }
+        thead { background: #13213b; }
+        th { color: #bfdbfe; }
 
         .equation {
           background: #08101d;
@@ -493,9 +457,7 @@
         .wordbox,
         table,
         .timeline li,
-        .link-card {
-          background: rgba(15, 23, 42, 0.92);
-        }
+        .link-card { background: rgba(15, 23, 42, 0.92); }
       }
     </style>
   </head>
@@ -506,9 +468,10 @@
         <nav class="nav" aria-label="Primary">
           <a href="#overview">Overview</a>
           <a href="#method">Method</a>
-          <a href="#pathologies">Pathologies</a>
+          <a href="#diagnostics">Diagnostics</a>
           <a href="#weekly">Weekly update</a>
           <a href="#results">Results</a>
+          <a href="#calibration">Calibration</a>
           <a href="#roadmap">Roadmap</a>
           <a href="#links">Links</a>
         </nav>
@@ -519,22 +482,22 @@
       <section class="hero">
         <div class="hero-copy">
           <p class="eyebrow">Active research project</p>
-          <h1>Operator-Level PH Conditioning for State Space Models</h1>
+          <h1>Reliability-Weighted PH Conditioning for DFouT/S4D</h1>
           <p class="lead">
-            Topo_S4 moves persistent-homology-guided conditioning from a scalar forward
-            mask to an additive correction of the SSM kernel itself. A lightweight PH
-            encoder produces a per-sample code <em>z</em>, and per-layer zero-init adapter
-            heads map <em>z</em> to a kernel delta <em>&Delta;C(x)</em>, so every sample
-            gets its own SSM kernel.
+            Topo_S4 now frames persistent homology as a selector rather than an
+            extra-capacity module. DFouT supplies broad frequency coverage; magnitude
+            PH finds stable spectral supports; group-delay reliability validates
+            phase-coherent speech peaks; and a train-mean-subtracted C-residue gate
+            turns that evidence into zero-parameter sample-specific conditioning.
           </p>
           <div class="badges" aria-label="Project tags">
             <span class="badge">S4 / S4D-DFouT</span>
             <span class="badge">Persistent Homology</span>
-            <span class="badge">Per-Sample Kernel</span>
-            <span class="badge">Zero-Init Adapter</span>
-            <span class="badge">sCIFAR-10</span>
-            <span class="badge">SC35</span>
-            <span class="badge">Pathfinder</span>
+            <span class="badge">Group Delay</span>
+            <span class="badge">Zero PH Params</span>
+            <span class="badge">C-Residue Gate</span>
+            <span class="badge">SC35 Main Result</span>
+            <span class="badge">Real / Shuffle / Zero</span>
           </div>
         </div>
 
@@ -543,16 +506,16 @@
             <h2>Current status</h2>
             <ul class="status-list">
               <li>
-                <span>Framing</span>
-                <strong>Pivoted from forward-mask PH-Sobolev (+0.09pp) to operator-level &Delta;C conditioning.</strong>
+                <span>Main framing</span>
+                <strong>DFouT provides coverage; PH provides reliable high-frequency selection.</strong>
               </li>
               <li>
-                <span>Diagnosed</span>
-                <strong>Three learning-dynamics pathologies: encoder rank collapse, z magnitude shrinkage, C_head rank-1 drift.</strong>
+                <span>Main result</span>
+                <strong>SC35 v19 GD post-only: 96.075% final test with 0 PH learnable parameters.</strong>
               </li>
               <li>
-                <span>In progress</span>
-                <strong>200-epoch runs for the current best config (v9b: persistence-weighted pool + orth 5e-4).</strong>
+                <span>Causal diagnostic</span>
+                <strong>Real PH beats shuffled PH and zero PH at evaluation time.</strong>
               </li>
             </ul>
           </div>
@@ -561,42 +524,46 @@
 
       <div class="section-stack">
         <section class="panel" id="overview">
-          <h2>Why operator-level?</h2>
+          <h2>Overview</h2>
           <p class="muted">
-            SSMs are LTI: the kernel is shared across samples within a batch. Per-sample
-            information must enter through either a scalar gain on the output or a
-            modification of the kernel itself. The scalar gain is what our earlier
-            forward-mask paper did; it delivered +0.09pp on sCIFAR-10 for a structural
-            reason, not a hyperparameter one.
+            Earlier Topo_S4 branches tried scalar PH-Sobolev forward masks and then
+            learnable operator-level PH adapters. The current result is sharper:
+            the PH module itself has no learnable parameters. It computes a reliable
+            per-sample spectral residual and uses it to reweight the existing S4D/DFouT
+            C residues.
           </p>
           <div class="grid three" style="margin-top: 18px;">
             <article class="mini">
-              <h3>Forward mask (prior)</h3>
+              <h3>DFouT = coverage</h3>
               <p>
-                &ycirc; = H(&omega;;x) &middot; K(&omega;) &middot; &ucirc;(&omega;;x).
-                A scalar per-sample gain on an already-learned global output scale.
-                Batch-averaged gradients absorb the per-sample variation back into LTI
-                parameters. Expressivity bounded by baseline + scalar reweighting.
+                DFouT already places poles across the Fourier domain. The current
+                question is not whether the model has high-frequency basis functions,
+                but which of those modes should matter for a particular sample.
               </p>
             </article>
             <article class="mini">
-              <h3>Operator-level (ours)</h3>
+              <h3>PH = stable support</h3>
               <p>
-                &ycirc; = (K(&omega;) + &Delta;K(&omega;;x)) &middot; &ucirc;(&omega;;x).
-                Adapter parameters do not share a global output scale with the SSM
-                kernel, so per-sample gradient signal survives averaging. No scalar
-                forward mask can reproduce this.
+                H<sub>0</sub> superlevel PH on log FFT magnitude behaves like a stable
+                spectral peak detector. It returns persistent peaks plus connected
+                support intervals rather than isolated noisy bins.
               </p>
             </article>
             <article class="mini">
-              <h3>PH as the conditioning signal</h3>
+              <h3>GD = reliability</h3>
               <p>
-                Each input's spectrum is summarised by H<sub>0</sub> superlevel
-                persistence: stable peaks and their supports become the 4 &times; 15
-                feature tensor fed into the PH encoder. Lipschitz-stable under input
-                perturbations (bottleneck theorem).
+                Group-delay reliability post-weights PH persistence so that
+                phase-coherent speech peaks are trusted more than magnitude-only,
+                noise-like high-frequency fluctuation.
               </p>
             </article>
+          </div>
+          <div class="callout" style="margin-top: 18px;">
+            <strong>One-line thesis:</strong>
+            DFouT supplies the spectral basis; PH identifies stable high-frequency
+            supports; group-delay reliability selects phase-coherent speech peaks;
+            mean-subtracted contrastive C-gating turns them into sample-specific
+            spectral conditioning.
           </div>
         </section>
 
@@ -604,109 +571,111 @@
           <h2>Method</h2>
           <div class="grid two">
             <article class="mini">
-              <h3>Per-sample kernel correction</h3>
+              <h3>Magnitude PH support</h3>
               <p class="muted">
-                PH features &rarr; encoder &rarr; code z. Per-layer zero-init head maps
-                z to an additive correction on that layer's output matrix C.
+                For each sample, compute log FFT magnitude and run 1D superlevel
+                H<sub>0</sub> PH. Supports are extracted at half height instead of at
+                the full death-level component.
               </p>
-              <div class="equation">C_eff,&ell; = C_&ell; + &Delta;C_&ell;(x),&nbsp;&nbsp; &Delta;C_&ell;(x) = W_&ell; z</div>
-              <p class="note">
-                At initialisation W_&ell; = 0, so the model is exactly the S4D baseline.
-                Bias-free heads: no global kernel shift, only per-sample variation.
-              </p>
+              <div class="equation">m_i(ω)=log(1+|FFT[x_i](ω)|), &nbsp; I_i,k={ω: m_i(ω) ≥ d_i,k + α_s(b_i,k−d_i,k)}</div>
+              <p class="note">Current main value: α<sub>s</sub> = 0.5.</p>
             </article>
 
             <article class="mini">
-              <h3>PH-native persistence-weighted pool</h3>
+              <h3>GD post-weighted persistence</h3>
               <p class="muted">
-                Replaces max-pooling with a parameter-free persistence-weighted sum
-                over peaks. Every valid peak receives gradient, so &phi; cannot drift
-                into a peak-agnostic mode.
+                Magnitude PH defines the topology. Group delay only reweights each
+                peak's persistence after PH is computed, preserving support topology
+                while validating phase reliability.
               </p>
-              <div class="equation">z_d = &Sigma;_p (&pi;_p / &Sigma;_p' &pi;_p') &middot; &phi;(peak_p)_d</div>
-              <p class="note">
-                Padding peaks have &pi; = 0 and are excluded automatically. Matches
-                the PH inductive bias: high-persistence peaks are topologically more
-                important.
-              </p>
+              <div class="equation">p_eff_i,k = p_i,k · max(r_GD_i,k, 0.25)<sup>1.0</sup></div>
+              <p class="note">This is the v19 GD post-only design.</p>
             </article>
           </div>
 
           <div class="grid two" style="margin-top: 16px;">
             <article class="mini">
-              <h3>Scale-invariant orthogonality on W</h3>
+              <h3>PH support → pole overlap</h3>
               <p class="muted">
-                Penalises shape (singular-value distribution) without pushing |W| up or
-                down, countering the C_head rank-1 drift without suppressing magnitude.
+                Each PH support interval overlaps the DFouT/S4D poles through a
+                Lorentzian window, producing a pole-wise PH evidence score.
               </p>
-              <div class="equation">&Lscr;_orth = &frac1;&Lscr; &Sigma;_&ell; || (d_in / tr(W<sup>T</sup>W)) W<sup>T</sup>W &minus; I ||&sup2;_F</div>
-              <p class="note">
-                Invariant under W &rarr; cW. Trained with &lambda; = 5&times;10<sup>-4</sup>.
-                A too-strong coefficient (5&times;10<sup>-2</sup>) suppresses |W| into
-                the "negligible magnitude" regime; the scale-invariant form fixes this.
-              </p>
+              <div class="equation">s_i,n = Σ_k p_eff_i,k · M_i,k,n</div>
+              <p class="note">The gate acts on existing poles rather than adding new ones.</p>
             </article>
 
             <article class="mini">
-              <h3>Backward-only masking doesn't work</h3>
+              <h3>Mean-subtracted C-residue gate</h3>
               <p class="muted">
-                A tempting alternative is identity forward + masked backward. It has no
-                objective function whenever the mask doesn't commute with the Hessian.
+                A high-band contrastive score is converted into a log-gate, then the
+                train-set mean gate is subtracted to remove the dataset-level spectral
+                prior.
               </p>
-              <div class="equation">M &nabla;&sup2;&Lscr;(y) = &nabla;&sup2;&Lscr;(y) M<sup>T</sup>&nbsp; &hArr;&nbsp; &tilde;g conservative</div>
-              <p class="note">
-                Fails generically. Our forward &Delta;C formulation has standard
-                backprop and a well-defined loss.
+              <div class="equation">C<sup>(i)</sup><sub>n</sub> = clip(exp(ρ(ℓ<sub>i,n</sub> − μ<sub>n</sub>)), g<sub>max</sub>) C<sub>n</sub></div>
+              <p class="note">Current values: ρ = 1.5, g<sub>max</sub> = 3.0, PH params = 0.</p>
+            </article>
+          </div>
+
+          <div class="grid three" style="margin-top: 16px;">
+            <article class="mini">
+              <h3>Why C?</h3>
+              <p>
+                C changes the residue/mixing of existing modes. It asks which covered
+                modes this sample should emphasize.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Why not A?</h3>
+              <p>
+                A/pole movement duplicates the coverage role already handled by DFouT
+                and can destabilize the spectral basis.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Why not dt?</h3>
+              <p>
+                dt couples frequency warp and memory length, making the sign and
+                interpretation of the intervention less clean.
               </p>
             </article>
           </div>
         </section>
 
-        <section class="panel" id="pathologies">
-          <h2>Three learning-dynamics pathologies</h2>
+        <section class="panel" id="diagnostics">
+          <h2>Causal diagnostic</h2>
           <p class="muted">
-            Operator-level conditioning is far more sensitive to learning dynamics than
-            the forward mask was. We identified three failure modes in sequence along
-            the pipeline, each diagnosed by a 20-epoch structural audit.
+            Final accuracy alone cannot tell whether PH is sample-specific. The project
+            therefore evaluates the same checkpoint under real PH, shuffled PH, zero PH,
+            and optionally no-PH inference.
           </p>
-          <div class="grid three" style="margin-top: 18px;">
+          <div class="grid two" style="margin-top: 18px;">
             <article class="mini">
-              <h3>1. Encoder rank collapse</h3>
-              <p class="muted">
-                PointNet+DeepSets encoder (&phi; + max + &rho;-MLP + LayerNorm):
-                pairwise cosine at maxpool 0.53, at &rho; output 0.98. Final LN strips
-                magnitude, &rho; drifts to rank-1 in depth.
-              </p>
-              <p class="note">
-                <strong>Fix:</strong> remove final LN, add orthogonal-init residual &rho;
-                block. Drove encoder-stage cosine 0.98 &rarr; 0.81.
-              </p>
+              <h3>Diagnostic modes</h3>
+              <table aria-label="Diagnostic modes">
+                <thead>
+                  <tr><th>Mode</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>real</td><td>Use PH<sub>i</sub> for sample x<sub>i</sub>.</td></tr>
+                  <tr><td>shuffle</td><td>Use PH<sub>π(i)</sub> for sample x<sub>i</sub>.</td></tr>
+                  <tr><td>zero</td><td>Set the PH residual gate to identity / zero residual.</td></tr>
+                  <tr><td>none</td><td>Use the baseline no-PH path, when available.</td></tr>
+                </tbody>
+              </table>
             </article>
             <article class="mini">
-              <h3>2. z magnitude shrinkage</h3>
-              <p class="muted">
-                After the encoder fix: ||z|| falls from ~3.0 at epoch 5 to ~0.4 at
-                epoch 20. Adapter bias inflates 4&times; to compensate. Per-sample share
-                of the adapter output falls from 86% to 24%.
-              </p>
-              <p class="note">
-                <strong>Fix:</strong> remove all post-pool learnable layers. &phi; outputs
-                d_z directly; pool output <em>is</em> z. Nothing to shrink.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>3. C_head rank-1 drift</h3>
-              <p class="muted">
-                Even with healthy z, the per-layer W drifts to rank-1:
-                &sigma;<sub>1</sub>/&sigma;<sub>2</sub> &asymp; 1.7, effective rank
-                39/64. Every sample receives kernel correction in the same direction
-                regardless of upstream diversity.
-              </p>
-              <p class="note">
-                <strong>Fix:</strong> scale-invariant orthogonality penalty on W with
-                mild &lambda;. Effective rank recovers to 63/64, cosine propagation z 0.76
-                &rarr; C_head 0.79.
-              </p>
+              <h3>How to read the pattern</h3>
+              <table aria-label="Diagnostic interpretation">
+                <thead>
+                  <tr><th>Pattern</th><th>Interpretation</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>real &gt; shuffle &gt; zero</td><td>Sample-specific PH signal.</td></tr>
+                  <tr><td>real ≈ shuffle &gt; zero</td><td>Distribution-level PH prior.</td></tr>
+                  <tr><td>real ≈ shuffle ≈ zero</td><td>PH ignored.</td></tr>
+                  <tr><td>zero &gt; real</td><td>PH perturbation cost exceeds benefit.</td></tr>
+                </tbody>
+              </table>
             </article>
           </div>
         </section>
@@ -714,43 +683,80 @@
         <section class="panel" id="weekly">
           <h2>This week's progress</h2>
           <div class="wordbox">
-            <p>This week closed the diagnosis loop for operator-level conditioning. After the bias-off experiment reproduced the z magnitude shrinkage (|z|: 3.07 &rarr; 0.47 over 20 epochs, Wz/full: 0.86 &rarr; 0.24), I stripped all post-pool learnable layers and made &phi; output d_z directly (v9). This alone eliminated the z shrinkage pathology and bumped |&Delta;C|/|C_base| into the VISIBLE regime (0.47 at epoch 20 vs 0.35 in v7). But a new drift surfaced: the per-layer W matrix stayed at &sigma;<sub>1</sub>/&sigma;<sub>2</sub> &asymp; 1.7 with effective rank only 39/64&mdash;W was collapsing the encoder's diversity into one direction of kernel correction. I added a scale-invariant orthogonality penalty, &Lscr;_orth = ||(d_in/tr(W<sup>T</sup>W))W<sup>T</sup>W &minus; I||<sup>2</sup><sub>F</sub>. A too-strong coefficient (5e-2) pushed W into the NEGLIGIBLE regime and lost 1.56pp of test accuracy; the scale-invariant form with &lambda;=5e-4 hit the right point (eff rank 63/64, C_head cosine propagation &Delta;cos = +0.03 instead of +0.18 in v7). Finally I replaced max-pooling with a parameter-free persistence-weighted pool, so every valid peak receives gradient and &phi; can't drift to peak-agnostic features. The combined v9b configuration (persistence-weighted + orth 5e-4 + no post-pool layers + no head bias) is the first run where every structural diagnostic lands in its expected regime simultaneously. 200-epoch end-to-end runs on sCIFAR, SC35, and Pathfinder are queuing now; the paper draft has been rewritten around this diagnostic pipeline, keeping the PH-Sobolev theory (Parseval decomposition, variance bound, SNR corollary) in the appendix as retained groundwork.</p>
+            <p>
+              This week reframed the project around the strongest current evidence:
+              <strong>v19 GD post-only PH C-gating on SC35</strong>. The paper and project
+              materials now present DFouT as the source of frequency coverage and PH as
+              the source of reliable sample-specific high-frequency selection. The old
+              learnable PH encoder / C-head branch is no longer the main method; it is
+              retained as a diagnostic history showing why learnable adapters can suffer
+              encoder rank collapse, z shrinkage, and C_head rank-1 drift. The new main
+              method keeps magnitude-PH support topology, post-weights persistence by
+              group-delay reliability, maps supports to DFouT poles, subtracts the train
+              mean log-gate, and applies a zero-parameter multiplicative gate to C.
+              v19 reaches 96.075% final test on SC35 with real PH beating both shuffled
+              and zero PH at evaluation time. v20 remains an ablation: it preserves a
+              real-vs-shuffle gap but nearly loses the real-vs-zero gap, suggesting that
+              phase should post-weight persistence rather than aggressively alter the PH
+              filtration landscape. CIFAR/sCIFAR is now written as a task-alignment
+              negative result: flattened 1D FFT PH is not the right view for image
+              semantics.
+            </p>
           </div>
         </section>
 
         <section class="panel" id="results">
           <h2>Current empirical picture</h2>
 
+          <div class="grid four" style="margin-bottom: 18px;">
+            <article class="mini">
+              <span class="kpi">96.075%</span>
+              <strong>SC35 v19 final test</strong>
+              <p class="note">Current main result.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">0</span>
+              <strong>PH learnable parameters</strong>
+              <p class="note">Deterministic PH/GD C-gate.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">+0.262%</span>
+              <strong>Real − shuffle</strong>
+              <p class="note">v19 epoch-30 diagnostic.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">+0.282%</span>
+              <strong>Real − zero</strong>
+              <p class="note">v19 epoch-30 diagnostic.</p>
+            </article>
+          </div>
+
           <div class="subpanel">
             <div class="subhead">
               <div>
-                <h3>Ablation ladder (20-epoch checkpoints, sCIFAR-10)</h3>
+                <h3>SC35 main table</h3>
                 <p>
-                  Each row isolates one intervention against the S4D-DFouT baseline.
-                  At 20 epochs the baseline has only reached ~80.7%; 200-epoch runs
-                  are in progress.
+                  The strongest row is v19 GD post-only: magnitude PH defines the
+                  support topology and group delay post-weights persistence.
                 </p>
               </div>
             </div>
-
-            <table aria-label="20-epoch ablation table">
+            <table aria-label="SC35 results">
               <thead>
                 <tr>
-                  <th>Variant</th>
-                  <th>Encoder</th>
-                  <th>Pool</th>
-                  <th>C_head</th>
-                  <th>Test @ ep20</th>
+                  <th>Method</th>
+                  <th>PH params</th>
+                  <th>Reliability</th>
+                  <th>Filtration</th>
+                  <th>Test</th>
+                  <th>Interpretation</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Baseline (no PH)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>80.67</td></tr>
-                <tr><td>v7 full</td><td>proj + &rho;_br</td><td>max</td><td>bias</td><td>80.55</td></tr>
-                <tr><td>v8 orth 5e-2</td><td>proj + &rho;_br</td><td>max</td><td>no-bias + orth</td><td>79.11</td></tr>
-                <tr><td>v8 orth 5e-3</td><td>proj + &rho;_br</td><td>max</td><td>no-bias + orth</td><td>(diagnosed)</td></tr>
-                <tr><td>v9 maxpool-only</td><td>&phi; only</td><td>max</td><td>no-bias</td><td>(running)</td></tr>
-                <tr><td>v9 + orth 5e-4</td><td>&phi; only</td><td>max</td><td>no-bias + orth</td><td>(running)</td></tr>
-                <tr><td><strong>v9b pers-weighted</strong></td><td><strong>&phi; only</strong></td><td><strong>pers-w</strong></td><td><strong>no-bias + orth</strong></td><td><strong>(running)</strong></td></tr>
+                <tr><td>S4D/DFouT baseline</td><td>0</td><td>none</td><td>none</td><td>~95.9%</td><td>strong baseline</td></tr>
+                <tr><td>Magnitude PH residual</td><td>0</td><td>magnitude persistence</td><td>magnitude</td><td>modest</td><td>sample signal weak</td></tr>
+                <tr><td><strong>v19 GD post-only</strong></td><td><strong>0</strong></td><td><strong>p · r<sup>GD</sup></strong></td><td><strong>magnitude</strong></td><td><strong>96.075%</strong></td><td><strong>main result</strong></td></tr>
+                <tr><td>v20 GD filtration-only</td><td>0</td><td>filtration</td><td>m + λ log R<sup>GD</sup></td><td>95.729%</td><td>real &gt; shuffle, but real ≈ zero</td></tr>
               </tbody>
             </table>
           </div>
@@ -758,97 +764,138 @@
           <div class="subpanel">
             <div class="subhead">
               <div>
-                <h3>Structural diagnostics at ep 20 (layer 0)</h3>
+                <h3>Evaluation-time PH swap</h3>
                 <p>
-                  Stage-by-stage pairwise cosine + W singular-value structure. The
-                  key pattern is how much C_head amplifies the upstream cosine:
-                  v7 adds +0.12, v9 + orth adds only +0.03.
+                  Same model weights, different PH inputs. This is the key evidence
+                  that v19 is sample-aligned rather than just a dataset prior.
                 </p>
               </div>
             </div>
-
-            <table aria-label="Structural diagnostics table">
+            <table aria-label="PH swap diagnostic">
               <thead>
                 <tr>
-                  <th>Diagnostic</th>
-                  <th>v7 full</th>
-                  <th>v9 max + orth</th>
-                  <th>v9b pers-w</th>
+                  <th>Checkpoint</th>
+                  <th>Real PH</th>
+                  <th>Shuffled PH</th>
+                  <th>Zero PH</th>
+                  <th>Real − shuffle</th>
+                  <th>Real − zero</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>&phi;-per-peak cos</td><td>0.80</td><td>0.77</td><td>(running)</td></tr>
-                <tr><td>post-pool cos</td><td>0.59</td><td>0.77</td><td>(running)</td></tr>
-                <tr><td>z cos</td><td>0.87</td><td>0.76</td><td>(running)</td></tr>
-                <tr><td>C_head cos</td><td>0.99</td><td>0.79</td><td>(running)</td></tr>
-                <tr><td>&sigma;<sub>1</sub>/&sigma;<sub>2</sub>(W)</td><td>2.82</td><td>1.07</td><td>(running)</td></tr>
-                <tr><td>Effective rank(W)/64</td><td>39</td><td>63</td><td>(running)</td></tr>
-                <tr><td>||z||</td><td>0.47</td><td>0.55</td><td>(running)</td></tr>
-                <tr><td>|&Delta;C|/|C_base|</td><td>0.35</td><td>0.09</td><td>(running)</td></tr>
+                <tr><td>v19 ep30 test</td><td>94.648%</td><td>94.386%</td><td>94.366%</td><td>+0.262%</td><td>+0.282%</td></tr>
+                <tr><td>v20 ep40 test</td><td>95.729%</td><td>95.427%</td><td>95.702%</td><td>+0.302%</td><td>+0.027%</td></tr>
               </tbody>
             </table>
-
             <p class="note">
-              v7 amplifies upstream cosine (rank-1 W). v9 + orth preserves upstream
-              cosine (full-rank W), which is the intended behaviour of the penalty.
+              v20 still creates sample alignment against shuffled PH, but its nearly
+              zero real-vs-zero gain suggests that filtration modification introduces
+              topology-perturbation cost.
             </p>
           </div>
 
           <div class="subpanel">
             <div class="subhead">
               <div>
-                <h3>z magnitude trajectory (v7, bias on)</h3>
+                <h3>CIFAR / sCIFAR as task-alignment negative result</h3>
                 <p>
-                  The shrinkage that motivated removing post-pool layers.
+                  Flattened 1D FFT PH discards the spatial structure that image
+                  classification needs. This is now treated as task dependence rather
+                  than as the main benchmark claim.
                 </p>
               </div>
             </div>
-
-            <table aria-label="z shrinkage trajectory">
+            <table aria-label="CIFAR results">
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>ep 5</th>
-                  <th>ep 10</th>
-                  <th>ep 15</th>
-                  <th>ep 20</th>
+                  <th>Method</th>
+                  <th>Test</th>
+                  <th>Interpretation</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>||z||</td><td>2.98</td><td>1.03</td><td>0.84</td><td>0.39</td></tr>
-                <tr><td>||Wz||</td><td>2.05</td><td>0.48</td><td>0.52</td><td>0.43</td></tr>
-                <tr><td>||b||</td><td>0.38</td><td>0.70</td><td>1.04</td><td>1.50</td></tr>
-                <tr><td>Wz / full</td><td>0.86</td><td>0.43</td><td>0.40</td><td>0.24</td></tr>
+                <tr><td>LRA-image S4D/DFouT baseline</td><td>89.18%</td><td>strong image baseline</td></tr>
+                <tr><td>v17 residual high-cut 0.15</td><td>87.38%</td><td>PH residual below baseline</td></tr>
+                <tr><td>v18 cut 0.05 + dropout 0.3</td><td>88.03%</td><td>improved but still below baseline</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
+        <section class="panel" id="calibration">
+          <h2>Hyperparameter calibration</h2>
+          <p class="muted">
+            The PH cache is dataset-specific, so the gate can be calibrated from
+            train-set spectral and PH/GD statistics instead of hand-tuned blindly.
+          </p>
+          <div class="grid three" style="margin-top: 18px;">
+            <article class="mini">
+              <h3>β from spectral slope</h3>
+              <p>
+                Fit log E(f) ≈ −γ log(1+f)+b and set β ≈ γ/2. SC35 gives
+                γ ≈ 1.1375, so β ≈ 0.5688; current β = 0.5.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>GD floor / power</h3>
+              <p>
+                Choose floor and power so PH mass retention stays around 0.65–0.85
+                and the median effective number of peaks stays around 8–16.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Residual scale</h3>
+              <p>
+                Choose ρ so Q95(|ρ(ℓ−μ)|) is roughly log(1.4–1.6), then set
+                g<sub>max</sub> so clipping remains rare.
+              </p>
+            </article>
+          </div>
+          <div class="grid two" style="margin-top: 16px;">
+            <article class="mini">
+              <h3>High-band cutoff</h3>
+              <p>
+                Use pole-wise class Fisher score over PH residuals to select a cutoff.
+                SC35 currently uses c = 0.25 with τ = 0.10.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Weak filtration λ</h3>
+              <p>
+                v20's λ = 0.25 is aggressive. Future filtration ablations should use
+                a peak-preservation rule to pick a weaker λ, likely closer to 0.05–0.10.
+              </p>
+            </article>
+          </div>
+        </section>
+
         <section class="panel">
-          <h2>Interpretation</h2>
-          <div class="grid three">
+          <h2>Legacy diagnostics retained</h2>
+          <p class="muted">
+            The previous learnable adapter branch is no longer the main method, but it
+            remains useful as a diagnostic history. It explained why a learnable PH
+            encoder plus C_head can fail even when the topological signal is meaningful.
+          </p>
+          <div class="grid three" style="margin-top: 18px;">
             <article class="mini">
-              <h3>Kernel &gt; output</h3>
+              <h3>Encoder rank collapse</h3>
               <p>
-                Conditioning the SSM operator produces a strictly richer model than
-                any scalar forward mask can. The forward mask's +0.09pp ceiling was
-                structural, not hyperparameter-tuning.
+                PointNet-style φ → maxpool → ρ MLP + LayerNorm collapsed per-sample
+                diversity before it reached the adapter.
               </p>
             </article>
             <article class="mini">
-              <h3>Diagnostics first</h3>
+              <h3>z magnitude shrinkage</h3>
               <p>
-                At 20 epochs the baseline is only at ~80.7%, so test accuracy alone
-                doesn't separate interventions. Stage-by-stage pairwise cosine and
-                W SVD do.
+                Even after rank repair, ||z|| shrank while bias absorbed capacity,
+                replacing per-sample signal with a global shift.
               </p>
             </article>
             <article class="mini">
-              <h3>Scale-invariant penalty</h3>
+              <h3>C_head rank-1 drift</h3>
               <p>
-                Orthogonality penalties that are not scale-invariant force |W| away
-                from the value the task wants. Trace-normalisation decouples shape
-                and magnitude cleanly.
+                The adapter W compressed diverse z vectors into nearly one kernel
+                correction direction, motivating the move to deterministic gating.
               </p>
             </article>
           </div>
@@ -858,24 +905,29 @@
           <h2>Roadmap</h2>
           <ol class="timeline">
             <li>
-              <strong>200-epoch sCIFAR-10 for v9b and ablations.</strong>
-              Primary main-result slot: v9b (persistence-weighted + orth 5e-4).
-              Ablations: v9 maxpool-only, v7 full. Confirms 20-epoch pathology
-              fixes survive full training.
+              <strong>3-seed SC35 v19 replication.</strong>
+              Confirm the 96.075% single-seed result and the real &gt; shuffle &gt; zero
+              diagnostic pattern under multiple seeds.
             </li>
             <li>
-              <strong>Cross-task validation via &gamma;.</strong>
-              Retain the &gamma;&ndash;&beta; diagnostic from PH-Sobolev as a
-              necessary-condition proxy. SC35 (&gamma;&asymp;1.08) is the primary
-              stretch target; Pathfinder (&gamma;&asymp;0.30) is the negative-result
-              control.
+              <strong>Class-conditional shuffle.</strong>
+              Compare real PH, same-class shuffled PH, and different-class shuffled PH
+              to separate class-level spectral signatures from instance-level cues.
             </li>
             <li>
-              <strong>Multi-seed and paper finalisation.</strong>
-              3 seeds on the best sCIFAR-10 configuration for statistical weight.
-              Paper draft is rewritten around the diagnosis pipeline; PH-Sobolev
-              theory (variance bound, SNR, stability) is kept in the appendix as
-              retained groundwork.
+              <strong>v21 cepstral envelope/fine PH.</strong>
+              Add source-filter evidence as an additive stream: envelope PH for formant
+              structure and fine PH for harmonic/source structure.
+            </li>
+            <li>
+              <strong>Weak calibrated v20 filtration.</strong>
+              Replace aggressive λ = 0.25 with a peak-preserving λ selected from
+              train-set PH/GD statistics.
+            </li>
+            <li>
+              <strong>Robustness evaluation.</strong>
+              Test whether GD-weighted PH supports improve speech robustness under
+              noise, corruption, or spectral perturbation.
             </li>
           </ol>
         </section>
@@ -901,7 +953,8 @@
     </main>
 
     <footer>
-      Last updated: 2026-04-19 &middot; Project status: active development
+      Last updated: 2026-04-26 &middot; Project status: active development &middot;
+      Current main: v19 GD post-only zero-parameter PH C-gate
     </footer>
 
     <script>
