@@ -5,25 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Topo_S4 research project: DFouT provides frequency coverage; persistent homology and group-delay reliability select sample-specific high-frequency supports for zero-parameter C-residue gating."
+      content="Topo_S4 research project: DFouT provides frequency coverage; 2D cubical persistent homology localizes PH-salient frequency regions for zero-parameter Sobolev C-residue modulation."
     />
     <meta name="theme-color" content="#0f172a" />
-    <title>Topo_S4 — Reliability-Weighted PH Conditioning</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>Topo_S4 — Cubical PH-Guided Sobolev C-Modulation</title>
     <style>
       :root {
-        --bg: #f5f7fb;
+        --bg: #f6f8fc;
         --surface: #ffffff;
-        --surface-2: #eef3fb;
+        --surface-2: #eef4ff;
         --ink: #0f172a;
         --muted: #475569;
-        --line: #d7e0ef;
+        --line: #d7e1ef;
         --accent: #1d4ed8;
         --accent-2: #0f766e;
         --good: #047857;
         --warn: #b45309;
         --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-        --radius: 20px;
+        --radius: 22px;
         --radius-sm: 14px;
         --content: 1180px;
       }
@@ -34,8 +33,8 @@
       body {
         margin: 0;
         background:
-          radial-gradient(circle at top left, rgba(29, 78, 216, 0.08), transparent 28%),
-          radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 24%),
+          radial-gradient(circle at top left, rgba(29, 78, 216, 0.09), transparent 28%),
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 25%),
           var(--bg);
         color: var(--ink);
         font: 16px/1.7 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -51,24 +50,24 @@
       .site-header {
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 20;
         backdrop-filter: blur(14px);
-        background: rgba(245, 247, 251, 0.84);
-        border-bottom: 1px solid rgba(215, 224, 239, 0.8);
+        background: rgba(246, 248, 252, 0.86);
+        border-bottom: 1px solid rgba(215, 225, 239, 0.86);
       }
 
       .site-header .wrap {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
         gap: 20px;
         padding: 14px 0;
       }
 
       .brand {
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        font-size: 1.1rem;
+        font-weight: 900;
+        font-size: 1.08rem;
+        letter-spacing: -0.03em;
       }
 
       .brand span { color: var(--accent); }
@@ -76,37 +75,33 @@
       .nav {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 14px;
         color: var(--muted);
-        font-size: 0.96rem;
+        font-size: 0.94rem;
       }
 
-      .nav a {
-        padding: 6px 0;
-        transition: color 0.2s ease;
-      }
-
+      .nav a { padding: 6px 0; }
       .nav a:hover { color: var(--ink); }
 
       main { padding: 36px 0 56px; }
 
       .hero {
         display: grid;
-        grid-template-columns: 1.5fr 0.95fr;
+        grid-template-columns: minmax(0, 1.42fr) minmax(320px, 0.88fr);
         gap: 24px;
-        align-items: stretch;
       }
 
+      .card,
       .hero-copy,
-      .hero-panel,
-      .panel {
+      .hero-panel {
         background: var(--surface);
-        border: 1px solid rgba(215, 224, 239, 0.95);
+        border: 1px solid rgba(215, 225, 239, 0.98);
         box-shadow: var(--shadow);
         border-radius: var(--radius);
       }
 
-      .hero-copy { padding: 34px; }
+      .hero-copy { padding: 36px; }
+      .hero-panel { padding: 28px; }
 
       .eyebrow {
         display: inline-flex;
@@ -114,8 +109,8 @@
         gap: 8px;
         margin: 0 0 14px;
         color: var(--accent);
-        font-size: 0.9rem;
-        font-weight: 700;
+        font-size: 0.86rem;
+        font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
@@ -131,14 +126,26 @@
 
       h1 {
         margin: 0 0 14px;
-        font-size: clamp(2rem, 3.7vw, 3.4rem);
-        line-height: 1.05;
-        letter-spacing: -0.04em;
+        font-size: clamp(2.05rem, 4vw, 3.55rem);
+        line-height: 1.04;
+        letter-spacing: -0.045em;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.55rem;
+        letter-spacing: -0.03em;
+      }
+
+      h3 {
+        margin: 0 0 10px;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
       }
 
       .lead {
         margin: 0;
-        max-width: 68ch;
+        max-width: 74ch;
         color: var(--muted);
         font-size: 1.08rem;
       }
@@ -156,32 +163,20 @@
         color: #1e3a8a;
         border-radius: 999px;
         padding: 7px 12px;
-        font-size: 0.92rem;
-        font-weight: 600;
-      }
-
-      .hero-panel {
-        padding: 28px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .hero-panel h2 {
-        margin: 0 0 18px;
-        font-size: 1.15rem;
+        font-size: 0.9rem;
+        font-weight: 700;
       }
 
       .status-list {
         display: grid;
-        gap: 16px;
+        gap: 14px;
         margin: 0;
         padding: 0;
         list-style: none;
       }
 
       .status-list li {
-        padding: 14px 16px;
+        padding: 15px 16px;
         border-radius: var(--radius-sm);
         background: var(--surface-2);
         border: 1px solid var(--line);
@@ -190,11 +185,9 @@
       .status-list span {
         display: block;
         color: var(--muted);
-        font-size: 0.88rem;
+        font-size: 0.86rem;
         margin-bottom: 4px;
       }
-
-      .status-list strong { font-size: 1rem; }
 
       .section-stack {
         display: grid;
@@ -202,25 +195,12 @@
         margin-top: 22px;
       }
 
-      .panel { padding: 28px; }
-
-      .panel h2 {
-        margin: 0 0 14px;
-        font-size: 1.55rem;
-        letter-spacing: -0.03em;
-      }
-
-      .panel h3 {
-        margin: 0 0 10px;
-        font-size: 1.05rem;
-        letter-spacing: -0.01em;
-      }
-
+      .card { padding: 28px; }
       .muted { color: var(--muted); }
 
       .grid { display: grid; gap: 16px; }
-      .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
       .mini {
@@ -231,16 +211,13 @@
       }
 
       .mini p:last-child,
-      .panel p:last-child { margin-bottom: 0; }
+      .card p:last-child { margin-bottom: 0; }
 
-      .kpi {
-        display: block;
-        font-size: 1.65rem;
-        line-height: 1.15;
-        letter-spacing: -0.04em;
-        font-weight: 800;
-        color: var(--accent);
-        margin-bottom: 6px;
+      .callout {
+        padding: 18px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(15, 118, 110, 0.08));
+        border: 1px solid rgba(29, 78, 216, 0.12);
       }
 
       .equation {
@@ -250,49 +227,27 @@
         background: #0f172a;
         color: #e2e8f0;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         overflow-x: auto;
+        white-space: nowrap;
       }
 
-      .callout {
-        padding: 18px;
-        border-radius: var(--radius-sm);
-        background: linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(15, 118, 110, 0.08));
-        border: 1px solid rgba(29, 78, 216, 0.12);
-      }
-
-      .wordbox {
-        padding: 20px;
-        border: 1px solid var(--line);
-        background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
-        border-radius: var(--radius-sm);
-      }
-
-      .wordbox p { margin: 0; }
-
-      .subpanel + .subpanel { margin-top: 22px; }
-
-      .subhead {
-        display: flex;
-        justify-content: space-between;
-        gap: 14px;
-        align-items: end;
-        margin-bottom: 12px;
-      }
-
-      .subhead p {
-        margin: 0;
-        color: var(--muted);
-        max-width: 74ch;
+      .kpi {
+        display: block;
+        font-size: 1.55rem;
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        color: var(--accent);
+        margin-bottom: 6px;
       }
 
       table {
         width: 100%;
         border-collapse: collapse;
-        border-spacing: 0;
-        overflow: hidden;
-        border-radius: 14px;
         border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
         background: #fff;
       }
 
@@ -303,55 +258,27 @@
         vertical-align: top;
         padding: 11px 12px;
         border-bottom: 1px solid var(--line);
-      }
-
-      tbody tr:last-child td { border-bottom: 0; }
-
-      th {
-        font-size: 0.9rem;
-        color: #1e3a8a;
-        font-weight: 700;
-      }
-
-      td { font-size: 0.96rem; }
-
-      .note {
-        margin-top: 12px;
-        color: var(--muted);
         font-size: 0.94rem;
       }
 
-      .timeline {
-        display: grid;
-        gap: 14px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
+      tbody tr:last-child td { border-bottom: 0; }
+      th { color: #1e3a8a; font-weight: 800; }
+
+      .note {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin-top: 10px;
       }
 
-      .timeline li {
-        position: relative;
-        padding: 16px 16px 16px 54px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-sm);
-        background: #fff;
-      }
-
-      .timeline li::before {
-        content: "";
-        position: absolute;
-        left: 18px;
-        top: 18px;
-        width: 20px;
-        height: 20px;
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
         border-radius: 999px;
-        background: var(--accent);
-        box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.12);
-      }
-
-      .timeline strong {
-        display: block;
-        margin-bottom: 4px;
+        background: rgba(180, 83, 9, 0.10);
+        color: #92400e;
+        font-weight: 800;
+        font-size: 0.82rem;
       }
 
       .links-grid {
@@ -387,29 +314,20 @@
         .grid.three,
         .grid.four,
         .links-grid { grid-template-columns: 1fr; }
-
-        .subhead {
-          flex-direction: column;
-          align-items: start;
-        }
       }
 
       @media (max-width: 720px) {
         .site-header .wrap {
-          align-items: start;
+          align-items: flex-start;
           flex-direction: column;
         }
 
         .hero-copy,
         .hero-panel,
-        .panel { padding: 22px; }
+        .card { padding: 22px; }
 
+        .nav { gap: 11px; }
         th, td { padding: 10px 9px; }
-
-        .nav {
-          gap: 12px;
-          font-size: 0.92rem;
-        }
       }
 
       @media (prefers-color-scheme: dark) {
@@ -422,45 +340,38 @@
           --line: #24324a;
           --accent: #60a5fa;
           --accent-2: #34d399;
-          --good: #34d399;
-          --warn: #fbbf24;
-          --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+          --shadow: 0 16px 42px rgba(0, 0, 0, 0.30);
         }
 
         body {
           background:
-            radial-gradient(circle at top left, rgba(96, 165, 250, 0.09), transparent 28%),
+            radial-gradient(circle at top left, rgba(96, 165, 250, 0.10), transparent 28%),
             radial-gradient(circle at top right, rgba(52, 211, 153, 0.08), transparent 24%),
             var(--bg);
         }
 
         .site-header {
-          background: rgba(11, 17, 32, 0.84);
+          background: rgba(11, 17, 32, 0.86);
           border-bottom-color: rgba(36, 50, 74, 0.9);
         }
 
         .badge {
           background: rgba(96, 165, 250, 0.12);
           color: #bfdbfe;
-          border-color: rgba(96, 165, 250, 0.18);
+          border-color: rgba(96, 165, 250, 0.20);
         }
 
         thead { background: #13213b; }
         th { color: #bfdbfe; }
-
-        .equation {
-          background: #08101d;
-          color: #dbeafe;
-        }
-
         .mini,
-        .wordbox,
         table,
-        .timeline li,
         .link-card { background: rgba(15, 23, 42, 0.92); }
+        .equation { background: #08101d; color: #dbeafe; }
+        .pill { background: rgba(251, 191, 36, 0.12); color: #fde68a; }
       }
     </style>
   </head>
+
   <body>
     <header class="site-header">
       <div class="wrap">
@@ -468,9 +379,8 @@
         <nav class="nav" aria-label="Primary">
           <a href="#overview">Overview</a>
           <a href="#method">Method</a>
-          <a href="#diagnostics">Diagnostics</a>
-          <a href="#weekly">Weekly update</a>
-          <a href="#results">Results</a>
+          <a href="#results">20% Results</a>
+          <a href="#sobolev">Sobolev</a>
           <a href="#calibration">Calibration</a>
           <a href="#roadmap">Roadmap</a>
           <a href="#links">Links</a>
@@ -482,457 +392,327 @@
       <section class="hero">
         <div class="hero-copy">
           <p class="eyebrow">Active research project</p>
-          <h1>Reliability-Weighted PH Conditioning for DFouT/S4D</h1>
+          <h1>Cubical PH-Guided Sobolev C-Modulation for DFouT</h1>
           <p class="lead">
-            Topo_S4 now frames persistent homology as a selector rather than an
-            extra-capacity module. DFouT supplies broad frequency coverage; magnitude
-            PH finds stable spectral supports; group-delay reliability validates
-            phase-coherent speech peaks; and a train-mean-subtracted C-residue gate
-            turns that evidence into zero-parameter sample-specific conditioning.
+            Topo_S4 now frames persistent homology as a frequency selector rather
+            than an extra-capacity module. DFouT supplies broad frequency coverage;
+            2D log-mel cubical PH localizes persistent time-frequency topology; and
+            a zero-parameter Sobolev C-gate selectively modulates the existing DFouT
+            residues.
           </p>
           <div class="badges" aria-label="Project tags">
             <span class="badge">S4 / S4D-DFouT</span>
-            <span class="badge">Persistent Homology</span>
-            <span class="badge">Group Delay</span>
+            <span class="badge">2D Cubical PH</span>
+            <span class="badge">GUDHI Cofaces</span>
+            <span class="badge">Hz/Nyquist Mapping</span>
+            <span class="badge">P96 support=3.0</span>
+            <span class="badge">20% SC35 Results</span>
             <span class="badge">Zero PH Params</span>
-            <span class="badge">C-Residue Gate</span>
-            <span class="badge">SC35 Main Result</span>
-            <span class="badge">Real / Shuffle / Zero</span>
           </div>
         </div>
 
         <aside class="hero-panel" aria-label="Project status">
-          <div>
-            <h2>Current status</h2>
-            <ul class="status-list">
-              <li>
-                <span>Main framing</span>
-                <strong>DFouT provides coverage; PH provides reliable high-frequency selection.</strong>
-              </li>
-              <li>
-                <span>Main result</span>
-                <strong>SC35 v19 GD post-only: 96.075% final test with 0 PH learnable parameters.</strong>
-              </li>
-              <li>
-                <span>Causal diagnostic</span>
-                <strong>Real PH beats shuffled PH and zero PH at evaluation time.</strong>
-              </li>
-            </ul>
-          </div>
+          <h2>Current status</h2>
+          <ul class="status-list">
+            <li>
+              <span>Main framing</span>
+              <strong>DFouT provides coverage; cubical PH provides sample-specific frequency selection.</strong>
+            </li>
+            <li>
+              <span>Current result scope</span>
+              <strong>20% effective-data SC35. Full 100% dataset results will be added separately.</strong>
+            </li>
+            <li>
+              <span>Best current 20% run</span>
+              <strong>P96, support=3.0, beta=0.5: dev 91.03%, test 89.21%.</strong>
+            </li>
+          </ul>
         </aside>
       </section>
 
       <div class="section-stack">
-        <section class="panel" id="overview">
+        <section class="card" id="overview">
           <h2>Overview</h2>
           <p class="muted">
-            Earlier Topo_S4 branches tried scalar PH-Sobolev forward masks and then
-            learnable operator-level PH adapters. The current result is sharper:
-            the PH module itself has no learnable parameters. It computes a reliable
-            per-sample spectral residual and uses it to reweight the existing S4D/DFouT
-            C residues.
+            Earlier Topo_S4 branches focused on 1D FFT PH, group-delay reliability,
+            and learnable PH adapters. The current direction uses 2D log-mel
+            cubical PH because speech evidence is naturally time-frequency
+            structured. Betti curves showed that cubical PH contains class signal,
+            but Betti summaries discard location. GUDHI persistence pair cofaces
+            recover where birth/death events occur, allowing PH to select frequency
+            bands for DFouT pole modulation.
           </p>
+
+          <div class="callout" style="margin-top: 18px;">
+            <strong>One-line thesis:</strong>
+            DFouT supplies the spectral basis; cubical PH localizes persistent
+            time-frequency topology; coface saliency converts that topology into
+            PH-salient frequency pseudo-peaks; and a zero-parameter Sobolev C-gate
+            selectively modulates DFouT residues.
+          </div>
+
           <div class="grid three" style="margin-top: 18px;">
             <article class="mini">
               <h3>DFouT = coverage</h3>
-              <p>
-                DFouT already places poles across the Fourier domain. The current
-                question is not whether the model has high-frequency basis functions,
-                but which of those modes should matter for a particular sample.
-              </p>
+              <p>DFouT already places poles over a broad Fourier grid. The remaining problem is selecting which modes matter for each sample.</p>
             </article>
             <article class="mini">
-              <h3>PH = stable support</h3>
-              <p>
-                H<sub>0</sub> superlevel PH on log FFT magnitude behaves like a stable
-                spectral peak detector. It returns persistent peaks plus connected
-                support intervals rather than isolated noisy bins.
-              </p>
+              <h3>Cubical PH = topology</h3>
+              <p>Log-mel cubical PH detects persistent 2D time-frequency components and holes rather than raw spectral peaks alone.</p>
             </article>
             <article class="mini">
-              <h3>GD = reliability</h3>
-              <p>
-                Group-delay reliability post-weights PH persistence so that
-                phase-coherent speech peaks are trusted more than magnitude-only,
-                noise-like high-frequency fluctuation.
-              </p>
+              <h3>Cofaces = location</h3>
+              <p>Birth/death cofaces identify the time-frequency locations of persistent events, which can be projected to frequency.</p>
             </article>
-          </div>
-          <div class="callout" style="margin-top: 18px;">
-            <strong>One-line thesis:</strong>
-            DFouT supplies the spectral basis; PH identifies stable high-frequency
-            supports; group-delay reliability selects phase-coherent speech peaks;
-            mean-subtracted contrastive C-gating turns them into sample-specific
-            spectral conditioning.
           </div>
         </section>
 
-        <section class="panel" id="method">
+        <section class="card" id="method">
           <h2>Method</h2>
+
           <div class="grid two">
             <article class="mini">
-              <h3>Magnitude PH support</h3>
-              <p class="muted">
-                For each sample, compute log FFT magnitude and run 1D superlevel
-                H<sub>0</sub> PH. Supports are extracted at half height instead of at
-                the full death-level component.
-              </p>
-              <div class="equation">m_i(ω)=log(1+|FFT[x_i](ω)|), &nbsp; I_i,k={ω: m_i(ω) ≥ d_i,k + α_s(b_i,k−d_i,k)}</div>
-              <p class="note">Current main value: α<sub>s</sub> = 0.5.</p>
+              <h3>1. Log-mel cubical filtration</h3>
+              <p class="muted">The log-mel spectrogram is normalized and treated as a 2D cubical filtration.</p>
+              <div class="equation">X̃_i(f,t) = (X_i(f,t) − min X_i) / (max X_i − min X_i + ε)</div>
+              <p class="note">The filtration defines the PH problem. Betti curves are only global summaries of the resulting PH.</p>
             </article>
 
             <article class="mini">
-              <h3>GD post-weighted persistence</h3>
-              <p class="muted">
-                Magnitude PH defines the topology. Group delay only reweights each
-                peak's persistence after PH is computed, preserving support topology
-                while validating phase reliability.
-              </p>
-              <div class="equation">p_eff_i,k = p_i,k · max(r_GD_i,k, 0.25)<sup>1.0</sup></div>
-              <p class="note">This is the v19 GD post-only design.</p>
+              <h3>2. Persistence pair coface saliency</h3>
+              <p class="muted">GUDHI birth/death cofaces locate persistent events on the time-frequency grid.</p>
+              <div class="equation">S_PH(f,t) = Σ_k p_k [K((f,t)−u_k^b) + K((f,t)−u_k^d)]</div>
+              <p class="note">Time marginalization gives s_PH(f), a PH-salient frequency curve.</p>
             </article>
           </div>
 
           <div class="grid two" style="margin-top: 16px;">
             <article class="mini">
-              <h3>PH support → pole overlap</h3>
-              <p class="muted">
-                Each PH support interval overlaps the DFouT/S4D poles through a
-                Lorentzian window, producing a pole-wise PH evidence score.
-              </p>
-              <div class="equation">s_i,n = Σ_k p_eff_i,k · M_i,k,n</div>
-              <p class="note">The gate acts on existing poles rather than adding new ones.</p>
+              <h3>3. PH-salient pseudo-peaks</h3>
+              <p class="muted">The frequency saliency curve is converted into pseudo-peaks expected by the direct-PH C path.</p>
+              <div class="equation">(pf, pp, sl, sr), &nbsp; P = 96, &nbsp; support_bins = 3.0</div>
+              <p class="note">P96 means the top 96 frequency pseudo-peaks, not 96 raw GUDHI pairs.</p>
             </article>
 
             <article class="mini">
-              <h3>Mean-subtracted C-residue gate</h3>
-              <p class="muted">
-                A high-band contrastive score is converted into a log-gate, then the
-                train-set mean gate is subtracted to remove the dataset-level spectral
-                prior.
-              </p>
-              <div class="equation">C<sup>(i)</sup><sub>n</sub> = clip(exp(ρ(ℓ<sub>i,n</sub> − μ<sub>n</sub>)), g<sub>max</sub>) C<sub>n</sub></div>
-              <p class="note">Current values: ρ = 1.5, g<sub>max</sub> = 3.0, PH params = 0.</p>
+              <h3>4. Hz/Nyquist pole mapping</h3>
+              <p class="muted">Mel-bin coordinates are mapped to physical frequency before DFouT pole alignment.</p>
+              <div class="equation">mel bin → mel center Hz → Hz / Nyquist</div>
+              <p class="note">This replaces normalized mel-bin coordinates and improves pole-frequency interpretation.</p>
             </article>
           </div>
 
-          <div class="grid three" style="margin-top: 16px;">
+          <div class="grid two" style="margin-top: 16px;">
             <article class="mini">
-              <h3>Why C?</h3>
-              <p>
-                C changes the residue/mixing of existing modes. It asks which covered
-                modes this sample should emphasize.
-              </p>
+              <h3>5. PH-to-pole overlap</h3>
+              <p class="muted">Each PH support interval softly overlaps DFouT poles through a Lorentzian window.</p>
+              <div class="equation">e_i,n = Σ_k pp_i,k · M_i,k,n</div>
+              <p class="note">The gate modulates existing poles rather than creating new basis functions.</p>
             </article>
+
             <article class="mini">
-              <h3>Why not A?</h3>
-              <p>
-                A/pole movement duplicates the coverage role already handled by DFouT
-                and can destabilize the spectral basis.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>Why not dt?</h3>
-              <p>
-                dt couples frequency warp and memory length, making the sign and
-                interpretation of the intervention less clean.
-              </p>
+              <h3>6. Sobolev C-residue gate</h3>
+              <p class="muted">A contrastive high-band score and mild Sobolev factor produce a multiplicative C gate.</p>
+              <div class="equation">C_n^(i) = g_i,n C_n, &nbsp; q_n=(1+ω_n)^β, &nbsp; β=0.5</div>
+              <p class="note">The PH module has zero learnable parameters.</p>
             </article>
           </div>
         </section>
 
-        <section class="panel" id="diagnostics">
-          <h2>Causal diagnostic</h2>
+        <section class="card" id="results">
+          <h2>20% Effective-Data SC35 Results</h2>
           <p class="muted">
-            Final accuracy alone cannot tell whether PH is sample-specific. The project
-            therefore evaluates the same checkpoint under real PH, shuffled PH, zero PH,
-            and optionally no-PH inference.
+            These are current 20% effective-data results under the official DFouT
+            learning rate lr=0.001. They are not the final full-dataset SC35 claim.
+            Full 100% dataset results will be added separately.
           </p>
+
+          <div class="grid four" style="margin: 18px 0;">
+            <article class="mini">
+              <span class="kpi">91.03%</span>
+              <strong>Best dev</strong>
+              <p class="note">PH-guided beta=0.5, 20% data.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">89.21%</span>
+              <strong>Test accuracy</strong>
+              <p class="note">PH-guided beta=0.5, 20% data.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">+0.33pp</span>
+              <strong>Dev gain</strong>
+              <p class="note">Over 20% DFouT-init baseline.</p>
+            </article>
+            <article class="mini">
+              <span class="kpi">+0.43pp</span>
+              <strong>Test gain</strong>
+              <p class="note">Over 20% DFouT-init baseline.</p>
+            </article>
+          </div>
+
+          <table aria-label="20 percent effective-data SC35 results">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Setting</th>
+                <th>Best epoch</th>
+                <th>Train acc</th>
+                <th>Dev acc</th>
+                <th>Test acc</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DFouT-init baseline</td>
+                <td>lr=0.001</td>
+                <td>30</td>
+                <td>98.71%</td>
+                <td>90.70%</td>
+                <td>88.78%</td>
+                <td>53.6m</td>
+              </tr>
+              <tr>
+                <td><strong>PH-guided C/Sobolev</strong></td>
+                <td><strong>P96, support=3.0, beta=0.5, lr=0.001</strong></td>
+                <td>39</td>
+                <td>99.36%</td>
+                <td><strong>91.03%</strong></td>
+                <td><strong>89.21%</strong></td>
+                <td>107.4m</td>
+              </tr>
+              <tr>
+                <td>PH-guided C/Sobolev</td>
+                <td>P96, support=3.0, beta=1.0, lr=0.001</td>
+                <td>34</td>
+                <td>99.24%</td>
+                <td>90.78%</td>
+                <td>89.10%</td>
+                <td>93.6m</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="note">
+            Current interpretation: beta=0.5 gives the best dev and test result.
+            beta=1.0 remains above baseline on test accuracy, but the smaller dev
+            gain suggests that the Sobolev factor should stay mild.
+          </p>
+        </section>
+
+        <section class="card" id="sobolev">
+          <h2>Uniform vs. PH-Guided Sobolev</h2>
+          <p class="muted">
+            The claim is not that PH-guided Sobolev maximizes Fisher separation.
+            Instead, PH-guided Sobolev improves downstream accuracy while suppressing
+            much of the within-class variance and noise amplification caused by
+            uniform Sobolev weighting.
+          </p>
+
           <div class="grid two" style="margin-top: 18px;">
             <article class="mini">
-              <h3>Diagnostic modes</h3>
-              <table aria-label="Diagnostic modes">
+              <h3>Variance and Fisher</h3>
+              <table aria-label="Variance and Fisher diagnostics">
                 <thead>
-                  <tr><th>Mode</th><th>Meaning</th></tr>
+                  <tr><th>Representation</th><th>Within</th><th>Between</th><th>Fisher</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>real</td><td>Use PH<sub>i</sub> for sample x<sub>i</sub>.</td></tr>
-                  <tr><td>shuffle</td><td>Use PH<sub>π(i)</sub> for sample x<sub>i</sub>.</td></tr>
-                  <tr><td>zero</td><td>Set the PH residual gate to identity / zero residual.</td></tr>
-                  <tr><td>none</td><td>Use the baseline no-PH path, when available.</td></tr>
+                  <tr><td>Raw</td><td>15.519</td><td>0.728</td><td>0.04688</td></tr>
+                  <tr><td>Uniform Sobolev</td><td>20.017 (+28.98%)</td><td>0.977 (+34.30%)</td><td>0.04881 (+4.12%)</td></tr>
+                  <tr><td>PH-guided Sobolev</td><td>17.554 (+13.11%)</td><td>0.819 (+12.52%)</td><td>0.04663 (-0.52%)</td></tr>
                 </tbody>
               </table>
+              <p class="note">Uniform Sobolev improves Fisher slightly, but by aggressively increasing both between-class separation and within-class variance.</p>
             </article>
+
             <article class="mini">
-              <h3>How to read the pattern</h3>
-              <table aria-label="Diagnostic interpretation">
+              <h3>Noise sensitivity</h3>
+              <table aria-label="Noise sensitivity diagnostics">
                 <thead>
-                  <tr><th>Pattern</th><th>Interpretation</th></tr>
+                  <tr><th>Representation</th><th>MSE</th><th>Mean abs</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>real &gt; shuffle &gt; zero</td><td>Sample-specific PH signal.</td></tr>
-                  <tr><td>real ≈ shuffle &gt; zero</td><td>Distribution-level PH prior.</td></tr>
-                  <tr><td>real ≈ shuffle ≈ zero</td><td>PH ignored.</td></tr>
-                  <tr><td>zero &gt; real</td><td>PH perturbation cost exceeds benefit.</td></tr>
+                  <tr><td>Raw</td><td>172,076</td><td>2.468</td></tr>
+                  <tr><td>Uniform Sobolev</td><td>235,691 (+36.97%)</td><td>2.870 (+16.28%)</td></tr>
+                  <tr><td>PH-guided Sobolev</td><td>193,368 (+12.37%)</td><td>2.619 (+6.11%)</td></tr>
                 </tbody>
               </table>
+              <p class="note">PH-guided Sobolev is less aggressive and keeps noise amplification much lower than uniform Sobolev.</p>
             </article>
           </div>
         </section>
 
-        <section class="panel" id="weekly">
-          <h2>This week's progress</h2>
-          <div class="wordbox">
-            <p>
-              This week reframed the project around the strongest current evidence:
-              <strong>v19 GD post-only PH C-gating on SC35</strong>. The paper and project
-              materials now present DFouT as the source of frequency coverage and PH as
-              the source of reliable sample-specific high-frequency selection. The old
-              learnable PH encoder / C-head branch is no longer the main method; it is
-              retained as a diagnostic history showing why learnable adapters can suffer
-              encoder rank collapse, z shrinkage, and C_head rank-1 drift. The new main
-              method keeps magnitude-PH support topology, post-weights persistence by
-              group-delay reliability, maps supports to DFouT poles, subtracts the train
-              mean log-gate, and applies a zero-parameter multiplicative gate to C.
-              v19 reaches 96.075% final test on SC35 with real PH beating both shuffled
-              and zero PH at evaluation time. v20 remains an ablation: it preserves a
-              real-vs-shuffle gap but nearly loses the real-vs-zero gap, suggesting that
-              phase should post-weight persistence rather than aggressively alter the PH
-              filtration landscape. CIFAR/sCIFAR is now written as a task-alignment
-              negative result: flattened 1D FFT PH is not the right view for image
-              semantics.
-            </p>
+        <section class="card" id="calibration">
+          <h2>P and Support Calibration</h2>
+          <div class="grid two">
+            <article class="mini">
+              <h3>P sweep</h3>
+              <table aria-label="P sweep">
+                <thead>
+                  <tr><th>P</th><th>Mass</th><th>HF mass</th><th>Cosine</th><th>Eff. poles</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>32</td><td>0.3436</td><td>0.3074</td><td>0.6351</td><td>12.98</td></tr>
+                  <tr><td>64</td><td>0.6127</td><td>0.5887</td><td>0.8337</td><td>20.14</td></tr>
+                  <tr><td><strong>96</strong></td><td><strong>0.8373</strong></td><td><strong>0.8282</strong></td><td><strong>0.9627</strong></td><td><strong>25.50</strong></td></tr>
+                  <tr><td>128</td><td>1.0000</td><td>1.0000</td><td>1.0000</td><td>28.95</td></tr>
+                </tbody>
+              </table>
+              <p class="note">P96 keeps most PH/HF mass without becoming the fully dense P128 setting.</p>
+            </article>
+
+            <article class="mini">
+              <h3>Support sweep with P96</h3>
+              <table aria-label="Support sweep">
+                <thead>
+                  <tr><th>support_bins</th><th>Coverage</th><th>Interpretation</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2.0</td><td>0.645</td><td>too narrow</td></tr>
+                  <tr><td><strong>3.0</strong></td><td><strong>0.843</strong></td><td><strong>main setting</strong></td></tr>
+                  <tr><td>4.0</td><td>0.951</td><td>getting broad</td></tr>
+                  <tr><td>5.0+</td><td>≈1.000</td><td>nearly dense boost</td></tr>
+                </tbody>
+              </table>
+              <p class="note">support=3.0 gives enough pole coverage while preserving PH-specific selectivity.</p>
+            </article>
           </div>
         </section>
 
-        <section class="panel" id="results">
-          <h2>Current empirical picture</h2>
-
-          <div class="grid four" style="margin-bottom: 18px;">
-            <article class="mini">
-              <span class="kpi">96.075%</span>
-              <strong>SC35 v19 final test</strong>
-              <p class="note">Current main result.</p>
-            </article>
-            <article class="mini">
-              <span class="kpi">0</span>
-              <strong>PH learnable parameters</strong>
-              <p class="note">Deterministic PH/GD C-gate.</p>
-            </article>
-            <article class="mini">
-              <span class="kpi">+0.262%</span>
-              <strong>Real − shuffle</strong>
-              <p class="note">v19 epoch-30 diagnostic.</p>
-            </article>
-            <article class="mini">
-              <span class="kpi">+0.282%</span>
-              <strong>Real − zero</strong>
-              <p class="note">v19 epoch-30 diagnostic.</p>
-            </article>
+        <section class="card">
+          <h2>Current Configuration Target</h2>
+          <p class="muted">The exact script name may differ by branch, but the scientific configuration should match this target.</p>
+          <div class="equation">
+            --paper dfout --lr 0.001 --stage C --c_mod_type direct_ph --direct_ph_mode contrastive --direct_ph_mean_mode residual --direct_ph_peak_sobolev_beta 0.5 --ph_source cubical_gudhi --cubical_freq_map hz_nyquist --ph_max_peaks 96 --cubical_pseudo_support_bins 3.0
           </div>
-
-          <div class="subpanel">
-            <div class="subhead">
-              <div>
-                <h3>SC35 main table</h3>
-                <p>
-                  The strongest row is v19 GD post-only: magnitude PH defines the
-                  support topology and group delay post-weights persistence.
-                </p>
-              </div>
-            </div>
-            <table aria-label="SC35 results">
-              <thead>
-                <tr>
-                  <th>Method</th>
-                  <th>PH params</th>
-                  <th>Reliability</th>
-                  <th>Filtration</th>
-                  <th>Test</th>
-                  <th>Interpretation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>S4D/DFouT baseline</td><td>0</td><td>none</td><td>none</td><td>~95.9%</td><td>strong baseline</td></tr>
-                <tr><td>Magnitude PH residual</td><td>0</td><td>magnitude persistence</td><td>magnitude</td><td>modest</td><td>sample signal weak</td></tr>
-                <tr><td><strong>v19 GD post-only</strong></td><td><strong>0</strong></td><td><strong>p · r<sup>GD</sup></strong></td><td><strong>magnitude</strong></td><td><strong>96.075%</strong></td><td><strong>main result</strong></td></tr>
-                <tr><td>v20 GD filtration-only</td><td>0</td><td>filtration</td><td>m + λ log R<sup>GD</sup></td><td>95.729%</td><td>real &gt; shuffle, but real ≈ zero</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="subpanel">
-            <div class="subhead">
-              <div>
-                <h3>Evaluation-time PH swap</h3>
-                <p>
-                  Same model weights, different PH inputs. This is the key evidence
-                  that v19 is sample-aligned rather than just a dataset prior.
-                </p>
-              </div>
-            </div>
-            <table aria-label="PH swap diagnostic">
-              <thead>
-                <tr>
-                  <th>Checkpoint</th>
-                  <th>Real PH</th>
-                  <th>Shuffled PH</th>
-                  <th>Zero PH</th>
-                  <th>Real − shuffle</th>
-                  <th>Real − zero</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>v19 ep30 test</td><td>94.648%</td><td>94.386%</td><td>94.366%</td><td>+0.262%</td><td>+0.282%</td></tr>
-                <tr><td>v20 ep40 test</td><td>95.729%</td><td>95.427%</td><td>95.702%</td><td>+0.302%</td><td>+0.027%</td></tr>
-              </tbody>
-            </table>
-            <p class="note">
-              v20 still creates sample alignment against shuffled PH, but its nearly
-              zero real-vs-zero gain suggests that filtration modification introduces
-              topology-perturbation cost.
-            </p>
-          </div>
-
-          <div class="subpanel">
-            <div class="subhead">
-              <div>
-                <h3>CIFAR / sCIFAR as task-alignment negative result</h3>
-                <p>
-                  Flattened 1D FFT PH discards the spatial structure that image
-                  classification needs. This is now treated as task dependence rather
-                  than as the main benchmark claim.
-                </p>
-              </div>
-            </div>
-            <table aria-label="CIFAR results">
-              <thead>
-                <tr>
-                  <th>Method</th>
-                  <th>Test</th>
-                  <th>Interpretation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>LRA-image S4D/DFouT baseline</td><td>89.18%</td><td>strong image baseline</td></tr>
-                <tr><td>v17 residual high-cut 0.15</td><td>87.38%</td><td>PH residual below baseline</td></tr>
-                <tr><td>v18 cut 0.05 + dropout 0.3</td><td>88.03%</td><td>improved but still below baseline</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="panel" id="calibration">
-          <h2>Hyperparameter calibration</h2>
-          <p class="muted">
-            The PH cache is dataset-specific, so the gate can be calibrated from
-            train-set spectral and PH/GD statistics instead of hand-tuned blindly.
+          <p class="note">
+            For 20% effective-data runs, scheduler_total_steps should be corrected from 200000 to approximately 40000.
           </p>
-          <div class="grid three" style="margin-top: 18px;">
-            <article class="mini">
-              <h3>β from spectral slope</h3>
-              <p>
-                Fit log E(f) ≈ −γ log(1+f)+b and set β ≈ γ/2. SC35 gives
-                γ ≈ 1.1375, so β ≈ 0.5688; current β = 0.5.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>GD floor / power</h3>
-              <p>
-                Choose floor and power so PH mass retention stays around 0.65–0.85
-                and the median effective number of peaks stays around 8–16.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>Residual scale</h3>
-              <p>
-                Choose ρ so Q95(|ρ(ℓ−μ)|) is roughly log(1.4–1.6), then set
-                g<sub>max</sub> so clipping remains rare.
-              </p>
-            </article>
-          </div>
-          <div class="grid two" style="margin-top: 16px;">
-            <article class="mini">
-              <h3>High-band cutoff</h3>
-              <p>
-                Use pole-wise class Fisher score over PH residuals to select a cutoff.
-                SC35 currently uses c = 0.25 with τ = 0.10.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>Weak filtration λ</h3>
-              <p>
-                v20's λ = 0.25 is aggressive. Future filtration ablations should use
-                a peak-preservation rule to pick a weaker λ, likely closer to 0.05–0.10.
-              </p>
-            </article>
-          </div>
         </section>
 
-        <section class="panel">
-          <h2>Legacy diagnostics retained</h2>
-          <p class="muted">
-            The previous learnable adapter branch is no longer the main method, but it
-            remains useful as a diagnostic history. It explained why a learnable PH
-            encoder plus C_head can fail even when the topological signal is meaningful.
-          </p>
-          <div class="grid three" style="margin-top: 18px;">
-            <article class="mini">
-              <h3>Encoder rank collapse</h3>
-              <p>
-                PointNet-style φ → maxpool → ρ MLP + LayerNorm collapsed per-sample
-                diversity before it reached the adapter.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>z magnitude shrinkage</h3>
-              <p>
-                Even after rank repair, ||z|| shrank while bias absorbed capacity,
-                replacing per-sample signal with a global shift.
-              </p>
-            </article>
-            <article class="mini">
-              <h3>C_head rank-1 drift</h3>
-              <p>
-                The adapter W compressed diverse z vectors into nearly one kernel
-                correction direction, motivating the move to deterministic gating.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="panel" id="roadmap">
+        <section class="card" id="roadmap">
           <h2>Roadmap</h2>
-          <ol class="timeline">
-            <li>
-              <strong>3-seed SC35 v19 replication.</strong>
-              Confirm the 96.075% single-seed result and the real &gt; shuffle &gt; zero
-              diagnostic pattern under multiple seeds.
-            </li>
-            <li>
-              <strong>Class-conditional shuffle.</strong>
-              Compare real PH, same-class shuffled PH, and different-class shuffled PH
-              to separate class-level spectral signatures from instance-level cues.
-            </li>
-            <li>
-              <strong>v21 cepstral envelope/fine PH.</strong>
-              Add source-filter evidence as an additive stream: envelope PH for formant
-              structure and fine PH for harmonic/source structure.
-            </li>
-            <li>
-              <strong>Weak calibrated v20 filtration.</strong>
-              Replace aggressive λ = 0.25 with a peak-preserving λ selected from
-              train-set PH/GD statistics.
-            </li>
-            <li>
-              <strong>Robustness evaluation.</strong>
-              Test whether GD-weighted PH supports improve speech robustness under
-              noise, corruption, or spectral perturbation.
-            </li>
-          </ol>
+          <div class="grid two">
+            <article class="mini">
+              <h3>Near-term</h3>
+              <p>
+                Add full-dataset SC35 results, then run the core ablations:
+                baseline, real PH, global shuffle, within-class shuffle, no Sobolev,
+                residual center, and no-center.
+              </p>
+            </article>
+            <article class="mini">
+              <h3>Validation</h3>
+              <p>
+                Repeat the best 20% and full-data settings across multiple seeds and
+                use class-conditional shuffles to separate instance-level PH from
+                class-level topology.
+              </p>
+            </article>
+          </div>
         </section>
 
-        <section class="panel" id="links">
+        <section class="card" id="links">
           <h2>Project materials</h2>
           <div class="links-grid">
             <a class="link-card" href="https://dongyeongkim22.github.io/Topo_S4/">
@@ -953,16 +733,8 @@
     </main>
 
     <footer>
-      Last updated: 2026-04-26 &middot; Project status: active development &middot;
-      Current main: v19 GD post-only zero-parameter PH C-gate
+      Last updated: 2026-05-03 &middot; Current main: 2D log-mel cubical-GUDHI PH-guided Sobolev C-modulation &middot;
+      Result scope: 20% effective-data SC35; full dataset pending
     </footer>
-
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js");
-        });
-      }
-    </script>
   </body>
 </html>
