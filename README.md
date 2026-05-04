@@ -1,195 +1,283 @@
-# Topo_S4: Reliability-Weighted PH Conditioning for S4D/DFouT
+# Topo_S4: Cubical-GUDHI PH-Guided Sobolev C-Modulation for DFouT
 
 ## Current framing
 
-The current version of this project is no longer centered on a learnable PH
-encoder plus learnable `C_head` adapter. The main paper framing is now:
+The current version of this project is no longer centered on 1D FFT PH, group-delay
+post-weighting, or a learnable PH encoder / `C_head` adapter. The main paper
+framing is now:
 
-> **DFouT provides frequency coverage; PH provides sample-specific reliable-frequency selection.**
+> **DFouT provides frequency coverage; 2D cubical PH provides sample-specific
+> frequency selection.**
 
-S4D/DFouT already places poles across a broad Fourier grid, so the main issue is
-not simply missing high-frequency basis functions. The remaining problem is that
-high-frequency evidence is mixed with noise-like fluctuation, while optimization
-and gradient SNR are still biased toward low and mid frequencies. The role of PH
-is therefore not to add a large learnable module. Its role is to select
-**topologically persistent and phase-reliable high-frequency supports** and use
-them to reweight the existing S4D/DFouT `C` residues per sample.
+S4D/DFouT already places poles across a broad Fourier grid. The remaining issue is
+not simply the absence of high-frequency basis functions, but the difficulty of
+selecting which frequency regions are reliable for each sample. Uniform Sobolev
+or high-frequency boosting can amplify useful speech structure and noise together.
+The role of PH is therefore to identify **topologically persistent frequency
+regions** in the time-frequency plane and use those regions to selectively
+modulate the existing DFouT/S4D `C` residues.
 
-The current main method is a deterministic, zero-parameter gate:
+The current main method is deterministic and zero-parameter:
 
 ```text
-magnitude FFT → H0 superlevel PH → half-height support
-              → group-delay reliability post-weighting
-              → PH-support / S4D-pole overlap
-              → high-band contrastive z-score
-              → train-set mean residual
-              → per-sample C-residue gate
+waveform
+→ log-mel spectrogram
+→ 2D cubical filtration
+→ GUDHI cubical persistence pairs and birth/death cofaces
+→ persistence-weighted coface saliency S_PH(f,t)
+→ frequency marginal s_PH(f)
+→ top-P PH-salient pseudo-peaks
+→ mel-bin to Hz/Nyquist mapping
+→ PH-to-DFouT-pole Lorentzian overlap
+→ contrastive Sobolev C-residue gate
 ```
 
 One-sentence project summary:
 
-> **DFouT provides the spectral basis; PH identifies stable high-frequency supports; group-delay reliability selects phase-coherent speech peaks; mean-subtracted contrastive C-gating turns these into zero-parameter sample-specific spectral conditioning.**
+> **DFouT supplies the spectral basis; cubical PH localizes persistent
+> time-frequency topology; coface saliency converts that topology into
+> PH-salient frequency pseudo-peaks; and a zero-parameter Sobolev C-gate
+> selectively modulates DFouT residues.**
 
-## What changed from the previous README
+## Current empirical status
 
-The previous README described **operator-level PH conditioning with a learnable
-PH encoder and learnable zero-init `C_head`**. That branch remains important as a
-historical diagnostic path, but it is no longer the main result.
+The current accuracy numbers are **20% effective-data SC35 results**, not the
+final full-dataset claim. Full 100% dataset experiments will be added separately.
 
-Current interpretation:
+| Method | Setting | Best epoch | Train acc | Dev acc | Test acc | Time |
+|---|---|---:|---:|---:|---:|---:|
+| DFouT-init baseline | lr=0.001 | 30 | 98.71 | 90.70 | 88.78 | 53.6m |
+| PH-guided C/Sobolev | P96, support=3.0, beta=0.5, lr=0.001 | 39 | 99.36 | **91.03** | **89.21** | 107.4m |
+| PH-guided C/Sobolev | P96, support=3.0, beta=1.0, lr=0.001 | 34 | 99.24 | 90.78 | 89.10 | 93.6m |
 
-- **PH-Sobolev forward mask**: useful theory and baseline; too easy for the
+Current 20%-data interpretation:
+
+```text
+beta=0.5 PH-guided C/Sobolev vs baseline:
+  dev  +0.33 percentage points
+  test +0.43 percentage points
+
+beta=1.0 PH-guided C/Sobolev vs baseline:
+  dev  +0.08 percentage points
+  test +0.32 percentage points
+```
+
+The current main choice is therefore:
+
+```text
+P = 96
+support_bins = 3.0
+Sobolev beta = 0.5
+lr = 0.001
+effective training data = 20%
+```
+
+## Why the framing changed
+
+Previous project versions tried several PH-conditioning routes:
+
+- **1D FFT PH**: useful class signal, but incremental gain on top of S4D/DFouT
+  was unstable.
+- **PH-Sobolev forward mask**: useful theoretical baseline, but easy for a
   scalar per-sample gain to be absorbed into the LTI output scale.
 - **Learnable PH encoder + `C_head`**: exposed valuable learning-dynamics
-  pathologies, but added trainable machinery that could collapse, shrink, or
-  become a global shift.
-- **Current main method**: zero-parameter PH/GD post-weighted residual gate on
-  `C`, with train-set mean subtraction to isolate sample-specific PH evidence.
+  pathologies, but added trainable machinery that could collapse or become a
+  global shift.
+- **Logit residual / feature FiLM**: showed PH alignment, but did not reliably
+  improve baseline generalization.
 
-The older pathologies are now treated as lessons for why the final method should
-be deterministic and residue-level:
-
-1. **Encoder rank collapse**: post-pool MLP/LayerNorm erased per-sample PH
-   diversity.
-2. **`z` magnitude shrinkage**: even a repaired encoder could shrink the
-   conditioning code while bias or weight scale absorbed the signal.
-3. **`C_head` rank-1 drift**: the adapter matrix could map diverse `z` values
-   into nearly the same kernel-correction direction.
+The current method moves PH to the operator level while keeping it
+zero-parameter. It uses 2D log-mel cubical PH to locate persistent
+time-frequency topology, then modulates the existing DFouT `C` residues.
 
 ## Method
 
-### 1. Spectrum and 1D superlevel `H0` PH
+### 1. Log-mel cubical filtration
 
-For each sample `x_i`, compute a 1D FFT magnitude spectrum:
+For each waveform `x_i`, compute a log-mel spectrogram:
 
 ```text
-X_i(ω) = FFT[x_i](ω)
-m_i(ω) = log(1 + |X_i(ω)|)
+X_i(f,t) ∈ R^{F×T}
 ```
 
-Run 1D superlevel-set `H0` persistent homology on `m_i`. In this setting, PH is
-essentially a stable spectral peak detector. Each peak `k` has
+Then normalize it per sample:
 
 ```text
-(ν_{i,k}, b_{i,k}, d_{i,k}, p_{i,k}, I_{i,k})
-p_{i,k} = b_{i,k} - d_{i,k}
+X̃_i(f,t) = (X_i(f,t) - min X_i) / (max X_i - min X_i + ε)
 ```
 
-where `ν` is peak frequency, `b` is birth, `d` is death, `p` is persistence, and
-`I` is the connected support interval. The current main method uses half-height
-support:
+This normalized 2D image defines the cubical filtration. The filtration is the
+topological problem on which cubical PH is computed.
+
+Important distinction:
 
 ```text
-θ_{i,k} = d_{i,k} + α_s (b_{i,k} - d_{i,k})
-I_{i,k}(α_s) = {ω : m_i(ω) ≥ θ_{i,k}}
-α_s = 0.5
+Log-mel cubical filtration defines the 2D PH problem.
+Betti curves summarize the resulting PH globally.
+Cofaces recover where the persistent events happened.
 ```
 
-### 2. Group-delay reliability post-weighting
+### 2. Betti curves are global summaries
 
-Magnitude PH finds stable peaks, but magnitude alone cannot always distinguish
-speech structure from noise-like artifacts. The current method keeps the PH
-topology from magnitude, then reweights persistence using group-delay reliability
-inside each PH support:
+A Betti curve can be computed from the cubical PH output by counting how many
+topological features are alive at each filtration threshold.
+
+Betti curves showed that 2D log-mel PH contains class-relevant signal:
+
+| Representation | Dev | Test |
+|---|---:|---:|
+| PH Betti only | 13.77 | 13.30 |
+| Raw log-mel | — | 34.30 |
+| Raw log-mel + PH | — | 36.57 |
+| Raw + PH, global shuffle | — | 33.97 |
+| Raw + PH, within-class shuffle | — | 37.60 |
+
+However, Betti curves discard location. They tell us that persistent topology
+exists, but not which frequency band produced it. That is why the current method
+uses GUDHI persistence pair cofaces.
+
+### 3. Persistence pair coface saliency
+
+GUDHI cubical persistence can provide the birth and death coface coordinates for
+each persistence pair.
+
+For a persistence pair `k`:
 
 ```text
-p_eff_{i,k} = p_{i,k} · [max(r_GD_{i,k}, f)]^γ
-r_GD_{i,k} = Agg_{ω ∈ I_{i,k}} R_GD_i(ω)
+birth coface: u^b_{i,k} = (f^b_{i,k}, t^b_{i,k})
+death coface: u^d_{i,k} = (f^d_{i,k}, t^d_{i,k})
+persistence: p_{i,k} = |birth - death|
 ```
 
-Main SC35 setting:
+The method deposits persistence mass at those cofaces to form a saliency map:
 
 ```text
-Agg = support_mean
-γ = 1.0
-f = 0.25
+S_PH_i(f,t) = sum_k p_{i,k} [K((f,t)-u^b_{i,k}) + K((f,t)-u^d_{i,k})]
 ```
 
-This preserves the magnitude-PH support while trusting phase-coherent peaks more
-than phase-unstable peaks.
-
-### 3. PH support to S4D pole overlap
-
-For each S4D/DFouT pole `n` with normalized frequency `ω̃_n` and bandwidth
-surrogate `b_n`, compute Lorentzian overlap with PH support:
+Then it collapses time to get a frequency saliency curve:
 
 ```text
-M_{i,k,n} = 1/π · [atan((r_{i,k} - ω̃_n)/(b_n + ε))
-                 - atan((l_{i,k} - ω̃_n)/(b_n + ε))]
+s_PH_i(f) = sum_t S_PH_i(f,t)
 ```
 
-The sample-pole PH evidence score is
+Interpretation:
+
+> `s_PH_i(f)` is not a raw spectral peak curve. It is the frequency marginal of
+> persistent 2D time-frequency topology.
+
+### 4. PH-salient pseudo-peaks
+
+The current direct-PH C-modulation path expects pseudo-peaks:
 
 ```text
-s_{i,n} = Σ_k p_eff_{i,k} M_{i,k,n}
+(pf, pp, sl, sr)
 ```
 
-### 4. Contrastive high-band log-gate
+where:
 
-The method does not apply a positive-only high-frequency boost. Instead, it
-redistributes evidence within the high band. For high-band pole set `H`, compute
+- `pf`: normalized center frequency
+- `pp`: PH saliency weight
+- `sl`, `sr`: left and right support boundaries
+
+The current main setting keeps the top 96 pseudo-peaks:
 
 ```text
-s̄_i = mean_{n ∈ H} s_{i,n}
-σ_i = std_{n ∈ H} s_{i,n}
-z_{i,n} = tanh((s_{i,n} - s̄_i)/(σ_i + ε))
+ph_max_peaks = 96
 ```
 
-Then apply a smooth high-band window and Sobolev-style frequency weight:
+This does **not** mean 96 raw GUDHI persistence pairs. It means the top 96
+frequency pseudo-peaks after constructing a lossless frequency pseudo-peak cache.
+
+### 5. Hz/Nyquist frequency mapping
+
+Earlier versions used normalized mel-bin coordinates:
 
 ```text
-h_n(c, τ) = sigmoid((ω̃_n - c)/τ)
-q_n = (1 + ω̃_n)^β
+pf = mel_bin / (n_mels - 1)
+```
+
+The current method maps mel-bin locations to physical frequency first:
+
+```text
+mel bin → mel center Hz → Hz / Nyquist
+```
+
+Support intervals are mapped the same way:
+
+```text
+mel-bin ± support_bins → Hz → Hz / Nyquist
+```
+
+Current main setting:
+
+```text
+cubical_freq_map = hz_nyquist
+cubical_pseudo_support_bins = 3.0
+```
+
+### 6. PH-to-DFouT-pole overlap
+
+For pseudo-peak `k` with support `[sl_{i,k}, sr_{i,k}]` and DFouT pole `n` with
+normalized frequency `ω_n`, compute a Lorentzian overlap:
+
+```text
+M_{i,k,n} =
+  1/π · [atan((sr_{i,k} - ω_n)/(b_n + ε))
+       - atan((sl_{i,k} - ω_n)/(b_n + ε))]
+```
+
+Pole evidence is:
+
+```text
+e_{i,n} = Σ_k pp_{i,k} M_{i,k,n}
+```
+
+This turns PH-salient frequency regions into pole-wise evidence.
+
+### 7. Contrastive PH-guided Sobolev C-gate
+
+The gate is contrastive within the high band:
+
+```text
+z_{i,n} = tanh((e_{i,n} - mean_H(e_i)) / (std_H(e_i) + τ_s + ε))
+```
+
+A smooth high-band window and Sobolev factor are applied:
+
+```text
+h_n = sigmoid((ω_n - c) / τ_c)
+q_n = (1 + ω_n)^β
 ℓ_{i,n} = α q_n h_n z_{i,n}
 ```
 
-Main SC35 setting:
+Current main values:
 
 ```text
-c = 0.25
-τ = 0.10
-α = 0.75
-β = 0.5
+direct_ph_alpha = 0.10
+direct_ph_peak_sobolev_beta = 0.5
+direct_ph_high_cut = 0.15
+direct_ph_cut_tau = 0.10
+direct_ph_score_tau = 0.05
+direct_ph_max_gain = 1.25
 ```
 
-The measured SC35 spectral slope was approximately `γ_spectrum ≈ 1.1375`, so
-`β ≈ γ_spectrum / 2 ≈ 0.5688`; the current `β = 0.5` is close to this estimate.
-
-### 5. Train-set mean residual C gate
-
-Early real-vs-shuffle diagnostics showed that a raw PH gate could carry a
-strong dataset-level spectral prior. The current method removes this prior by
-subtracting the train-set mean log-gate per pole:
+The final residue modulation is:
 
 ```text
-μ_n = E_{i ∈ train}[ℓ_{i,n}]
-r_{i,n} = ℓ_{i,n} - μ_n
-g_{i,n} = exp(ρ r_{i,n})
-C^{(i)}_n = clip(g_{i,n}, g_max) C_n
+C^{(i)}_n = g_{i,n} C_n
 ```
 
-Main SC35 setting:
-
-```text
-ρ = 1.5
-g_max = 3.0
-n_ph_params = 0
-```
-
-Final conditioning rule:
-
-```text
-C^{(i)}_n = clip(exp(ρ(ℓ_{i,n} - μ_n)), g_max) · C_n
-```
+with `g_{i,n}` derived from the PH-guided Sobolev log-gate.
 
 ## Why condition `C`, not `A` or `dt`?
 
-DFouT already provides pole placement and frequency coverage. Strongly changing
-`A` or pole frequencies with PH is therefore redundant and can destabilize the
-frequency basis. Modulating `dt` also mixes frequency warping with memory length,
-so the sign of the intervention is less interpretable.
+DFouT already provides pole placement and broad Fourier coverage. Strongly
+changing `A` or pole frequencies with PH is redundant and can destabilize the
+basis. Modulating `dt` also mixes frequency warping with memory length.
 
-The `C` residue is the clean target:
+The `C` residue is the clean target because it controls how much each existing
+pole contributes:
 
 ```text
 K_i(Ω) = Σ_n g_{i,n} C_n η_n v_n(Ω)
@@ -199,179 +287,129 @@ PH does not create new poles. It answers:
 
 > **Which existing frequency modes should be emphasized for this sample?**
 
-## Main empirical picture
+## Uniform Sobolev vs PH-guided Sobolev
 
-### SC35: current main result
+The current evidence does not support the claim that PH-guided Sobolev simply
+maximizes Fisher separation. Instead, PH-guided Sobolev is best interpreted as a
+selective high-frequency modulation that improves downstream accuracy while
+reducing the variance/noise amplification of a uniform Sobolev boost.
 
-| Method | PH params | Reliability | Filtration | Test | Interpretation |
-|---|---:|---|---|---:|---|
-| S4D/DFouT baseline | 0 | none | none | 95.9109 test@best-dev | strong baseline |
-| Magnitude PH residual | 0 | magnitude persistence | magnitude | modest | sample signal present but weak |
-| **v19 GD post-only** | **0** | `p · r_GD` | magnitude | **96.075** | **current main result** |
-| v20 GD filtration-only | 0 | none post | `m + λ log R_GD` | 95.729 | real > shuffle, but real ≈ zero |
+### Variance and Fisher diagnostic
 
-The most important evidence is not only final accuracy; it is the eval-time
-causal diagnostic. For v19 at the ep30 checkpoint on SC35:
+| Representation | Within | Between | Fisher |
+|---|---:|---:|---:|
+| Raw | 15.519 | 0.728 | 0.04688 |
+| Uniform Sobolev | 20.017 (+28.98%) | 0.977 (+34.30%) | 0.04881 (+4.12%) |
+| PH-guided Sobolev | 17.554 (+13.11%) | 0.819 (+12.52%) | 0.04663 (-0.52%) |
 
-| Mode | Test accuracy |
-|---|---:|
-| real PH | 94.648 |
-| shuffled PH | 94.386 |
-| zero PH | 94.366 |
-
-Gaps:
+Interpretation:
 
 ```text
-real - shuffle = +0.262 pp
-real - zero    = +0.282 pp
+Uniform Sobolev:
+  increases class separation,
+  but also strongly increases within-class variance.
+  Fisher improves slightly.
+
+PH-guided Sobolev:
+  suppresses within-class variance amplification compared with uniform Sobolev,
+  but also reduces between-class separation gain.
+  Fisher remains approximately raw-level.
 ```
 
-This is the strongest current evidence that the PH signal is sample-aligned on
-SC35 rather than merely acting as a dataset-level prior.
+### Noise sensitivity diagnostic
 
-### v20: why filtration-only is secondary
+| Representation | MSE | Mean abs |
+|---|---:|---:|
+| Raw | 172,076 | 2.468 |
+| Uniform Sobolev | 235,691 (+36.97%) | 2.870 (+16.28%) |
+| PH-guided Sobolev | 193,368 (+12.37%) | 2.619 (+6.11%) |
 
-v20 modifies the landscape before PH:
+Interpretation:
+
+> PH-guided Sobolev is less aggressive than uniform Sobolev. It keeps the
+> useful high-frequency inductive bias while suppressing much of the noise and
+> within-class variance amplification.
+
+## P and support calibration
+
+### P sweep
+
+| P | Retained mass | Retained HF mass | Cosine vs full | Effective poles |
+|---:|---:|---:|---:|---:|
+| 8 | 0.0969 | 0.0768 | 0.4909 | 9.24 |
+| 16 | 0.1853 | 0.1533 | 0.5271 | 10.09 |
+| 24 | 0.2671 | 0.2306 | 0.5790 | 11.40 |
+| 32 | 0.3436 | 0.3074 | 0.6351 | 12.98 |
+| 48 | 0.4846 | 0.4535 | 0.7382 | 16.49 |
+| 64 | 0.6127 | 0.5887 | 0.8337 | 20.14 |
+| 96 | 0.8373 | 0.8282 | 0.9627 | 25.50 |
+| 128 | 1.0000 | 1.0000 | 1.0000 | 28.95 |
+
+Current interpretation:
 
 ```text
-m̃_i(ω) = m_i(ω) + λ_GD log(R_GD_i(ω) + ε)
+P32 is too sparse.
+P128 is too broad and risks becoming dense boosting.
+P96 preserves most PH/HF saliency while retaining selectivity.
 ```
 
-With `λ_GD = 0.25`, the setting is aggressive. At the ep40 checkpoint:
+### Support sweep with P96
 
-| Mode | Test accuracy |
-|---|---:|
-| real PH | 95.729 |
-| shuffled PH | 95.427 |
-| zero PH | 95.702 |
+| support_bins | Support coverage |
+|---:|---:|
+| 2.0 | 0.645 |
+| 3.0 | 0.843 |
+| 4.0 | 0.951 |
+| 5.0 | 0.998 |
+| 6.0 | 1.000 |
+| 8.0 | 1.000 |
 
-The real-shuffle gap survives (`+0.302 pp`), but the real-zero gap nearly
-vanishes (`+0.027 pp`). Interpretation:
-
-> **Phase filtration can create sample alignment, but perturbing the PH landscape
-> too strongly can erase the benefit. Post-weighting is more robust.**
-
-### CIFAR/sCIFAR: negative transfer is task-alignment evidence
-
-Flattened 1D FFT PH is not well aligned with image semantics. CIFAR/LRA-image
-needs spatial layout, edge orientation, texture locality, and object shape; a
-global flattened 1D spectrum discards too much of that structure.
-
-| Method | Test | Interpretation |
-|---|---:|---|
-| LRA-image S4D/DFouT baseline none | 89.18 | strong baseline |
-| `cifar_v17_resid15_max3` | 87.38 | residual signal appears, but under baseline |
-| `cifar_v18_resid125_cut005_phdrop03` | 88.03 | improved, still under baseline |
-
-Conclusion:
-
-> **Speech is a native 1D spectral task; flattened grayscale CIFAR is not.**
-
-Future image versions should use 2D FFT radial/angular PH, local patch PH, edge
-PH, or spatial/texture-aware topological summaries rather than flattened 1D FFT
-PH.
-
-## Real / shuffle / zero diagnostic
-
-For a checkpoint, evaluate four modes:
+Current interpretation:
 
 ```text
-real:     f(x_i, PH_i)
-shuffle:  f(x_i, PH_{π(i)})
-zero:     f(x_i, 0)
-none:     f(x_i, no PH branch)
+support=2.0 undercovers poles.
+support=3.0 gives enough coverage while preserving selectivity.
+support>=4.0 starts to become too broad.
 ```
 
-Interpretation table:
-
-| Pattern | Meaning |
-|---|---|
-| `real > shuffle > zero` | sample-specific PH signal |
-| `real ≈ shuffle > zero` | distributional PH prior |
-| `real ≈ shuffle ≈ zero` | PH ignored |
-| `zero > real` | PH perturbation cost exceeds benefit |
-
-v19 on SC35 currently shows `real > shuffle` and `real > zero`.
-
-## Hyperparameter calibration
-
-The PH cache is dataset-specific, so several hyperparameters can be calibrated
-from train-set PH/GD statistics.
-
-### Spectral slope for `β`
-
-```text
-E(f) = E_i[|X_i(f)|²]
-log E(f) ≈ -γ log(1 + f) + b
-β_auto ≈ γ / 2
-```
-
-For SC35, `γ ≈ 1.1375`, so `β_auto ≈ 0.5688`; the current `β = 0.5` is close.
-
-### GD power and floor
-
-```text
-w_{i,k} = p_{i,k} [max(r_GD_{i,k}, f)]^γ
-η_M = E_i [Σ_k w_{i,k} / (Σ_k p_{i,k} + ε)]
-ESS_i = (Σ_k w_{i,k})² / (Σ_k w_{i,k}² + ε)
-```
-
-Suggested targets:
-
-```text
-η_M ∈ [0.65, 0.85]
-median(ESS) ∈ [8, 16]
-```
-
-### Residual scale and gain budget
-
-```text
-u_{i,n} = ρ(ℓ_{i,n} - μ_n)
-ρ_auto = log(g_95) / (Q95(|ℓ - μ|) + ε)
-g_max  = exp(Q99(|u|))
-```
-
-Target `Q95(|u|) ≈ log(1.4–1.6)` and keep clipping fraction small.
-
-### Weak phase-filtration lambda
-
-The v20 `λ = 0.25` setting is too aggressive for the main claim. A safer rule is
-peak-preserving calibration:
-
-```text
-m̃(ω) = m(ω) + λ a(ω),  a(ω) = log(R_GD(ω) + ε)
-p̃_k ≈ p_k + λ[a(ν_k) - a(d_k)]
-λ_auto = Q0.2 [ η p_k / (a(d_k) - a(ν_k) + ε) ]
-```
-
-Use this only for the secondary weak-filtration ablation.
-
-## Quick-start configuration target
-
-The exact script name may differ by branch. The current main scientific
-configuration should match the following target settings:
+## Current main configuration target
 
 ```bash
 python <train_script.py> \
   --task sc35 \
   --paper dfout \
-  --condition_target C \
-  --ph_gate c_residue \
-  --ph_learnable_params 0 \
-  --ph_support magnitude_h0 \
-  --support_alpha 0.5 \
-  --ph_gd_post_weight \
-  --ph_gd_power 1.0 \
-  --ph_gd_floor 0.25 \
-  --ph_gd_agg support_mean \
-  --ph_pole_overlap lorentzian \
-  --ph_high_cut 0.25 \
-  --ph_high_tau 0.10 \
-  --sobolev_beta 0.5 \
-  --ph_gate_alpha 0.75 \
-  --ph_residual_mean train \
-  --ph_residual_scale 1.5 \
-  --ph_gain_max 3.0
+  --lr 0.001 \
+  --stage C \
+  --c_mod_type direct_ph \
+  --direct_ph_mode contrastive \
+  --direct_ph_mean_mode residual \
+  --direct_ph_residual_scale 1.0 \
+  --direct_ph_alpha 0.10 \
+  --direct_ph_static_alpha 0.0 \
+  --direct_ph_peak_sobolev_beta 0.5 \
+  --direct_ph_high_cut 0.15 \
+  --direct_ph_cut_tau 0.10 \
+  --direct_ph_score_tau 0.05 \
+  --direct_ph_max_gain 1.25 \
+  --direct_ph_overlap_mode lorentzian \
+  --direct_ph_mean_batch_size 2048 \
+  --ph_source cubical_gudhi \
+  --threshold_mode fixed01 \
+  --ph_norm per_sample_minmax \
+  --auto_params \
+  --f_min 1000 \
+  --delta_f_min 50 \
+  --tau_event_ms 20 \
+  --sigma_noise 0.02 \
+  --n_mels_cap 128 \
+  --cubical_freq_map hz_nyquist \
+  --cubical_saliency_topk 0 \
+  --ph_max_peaks 96 \
+  --cubical_peak_weight_norm none \
+  --cubical_pseudo_support_bins 3.0 \
+  --cubical_saliency_dims 0,1 \
+  --cubical_saliency_sigma_f 2.0 \
+  --cubical_saliency_norm max
 ```
 
 Baseline comparison target:
@@ -380,70 +418,57 @@ Baseline comparison target:
 python <train_script.py> \
   --task sc35 \
   --paper dfout \
+  --lr 0.001 \
   --condition_target none
 ```
 
-Eval-time causal diagnostic target:
-
-```bash
-python <eval_script.py> --ckpt <checkpoint.pt> --ph_mode real
-python <eval_script.py> --ckpt <checkpoint.pt> --ph_mode shuffle
-python <eval_script.py> --ckpt <checkpoint.pt> --ph_mode zero
-python <eval_script.py> --ckpt <checkpoint.pt> --ph_mode none
-```
-
-## File structure
-
-The repository contains both historical and current research code. The exact
-entry-point names may differ by branch. The existing legacy files are still
-useful because they document the pivot away from learned PH adapters. The current
-main method should be organized around PH/GD caching, deterministic pole scoring,
-real/shuffle/zero evaluation, and C-residue gating.
-
-Known legacy / diagnostic files from the previous branch:
+For 20% effective-data runs, the scheduler must also be corrected to the
+effective subset size:
 
 ```text
-s4d_ph_conditioned.py               # Learnable PHEncoder + per-layer PHModulationHead
-phase4_train_ph_conditioned.py      # Older operator-level adapter training script
-phase4d_encoder_collapse_audit.py   # Encoder pairwise-cosine diagnostic
-phase4e_chead_weight_audit.py       # C_head SVD + Wz/b diagnostic
-s4d_ph_sobolev_runner_consistent.py # Original forward-mask PH-Sobolev baseline
-variance_analysis.py                # Gradient variance analysis for PH-Sobolev
-empirical_bridge.py                 # γ measurement and gap analyses
+scheduler_total_steps: 200000 → approximately 40000
 ```
 
-Suggested current-code responsibilities, regardless of filename:
+## Real / shuffle / zero diagnostic
+
+For final validation, evaluate a fixed checkpoint under:
 
 ```text
-FFT magnitude + H0 PH cache          # sample-wise supports and persistence
-Group-delay reliability cache        # phase-derived reliability over frequency
-PH-to-pole overlap module            # Lorentzian support/pole overlap
-Mean-residual C-gate module          # ℓ_i,n - μ_n and clipped exp gate
-Eval-mode diagnostic                 # real / shuffle / zero / none
-Calibration utilities                # β, GD floor/power, residual scale, high cut
+real:          f(x_i, PH_i)
+global_shuffle f(x_i, PH_{π(i)})
+within_class: f(x_i, PH_{π_c(i)})
+zero / none:  f(x_i, 0) or baseline path
 ```
+
+Interpretation table:
+
+| Pattern | Meaning |
+|---|---|
+| real > none | PH contributes beyond no-PH ablation |
+| real > global shuffle | sample-aligned PH frequency saliency matters |
+| real > within-class shuffle | instance-level PH matters beyond class prototype |
+| real ≈ global/within > none | PH mostly acts as a distributional or class prior |
+| zero > real | PH perturbation cost exceeds benefit |
 
 ## Roadmap
 
-1. **v19 auto-calibrated GD post-only replication**  
-   Fix the current main method and repeat with calibrated `β`, GD floor/power,
-   residual scale, and high-band cutoff.
+1. **Add full-dataset SC35 results**  
+   The current numbers are 20% effective-data results only. The 100% dataset
+   results should be reported separately.
 
-2. **v21 cepstral envelope/fine additive stream**  
-   Keep GD post-only as the main stream and add cepstral envelope/fine PH as
-   additive evidence, not multiplicative filtering.
+2. **Run core ablations**  
+   Compare baseline, PH real, PH global shuffle, PH within-class shuffle, no
+   Sobolev, residual center, and no-center.
 
-3. **v20 weak calibrated filtration**  
-   Replace aggressive `λ = 0.25` with peak-preserving weak filtration, likely in
-   the `0.05–0.10` range after calibration.
+3. **Evaluate P/support variants**  
+   Compare P32/P96/P128 and support bins 2/3/4 under the same lr=0.001 setup.
 
-4. **Three seeds on SC35**  
-   Run v19 and the most promising v21 variant across three seeds before making a
-   strong paper claim.
+4. **Multi-seed validation**  
+   Repeat the best 20% and full-data settings over multiple seeds before making a
+   strong final claim.
 
 5. **Class-conditional shuffle diagnostic**  
-   Compare real, same-class shuffle, and different-class shuffle to separate
-   class-level spectral signatures from instance-level hard-example cues.
+   Separate instance-level PH signal from class-level topological prototypes.
 
 ## Project materials
 
@@ -458,4 +483,4 @@ This work builds on:
 - S4/S4D: Gu et al. (2022)
 - S4D-DFouT: Solozabal et al. (2025)
 - Tuning Frequency Bias of SSMs: Yu et al. (2024)
-- PH-Sobolev: the earlier forward-mask starting point for this project
+- Persistent homology and cubical persistence tooling including GUDHI
